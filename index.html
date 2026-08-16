@@ -3,6 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<script>
+// Restore the nav collapsed/expanded state before first paint so there is
+// no flash of the wrong layout. Kept intentionally tiny and dependency-free.
+(function(){
+  try{
+    if(localStorage.getItem('finLedger.menuCollapsed') === '1'){
+      document.documentElement.classList.add('nav-collapsed');
+    }
+  }catch(e){ /* storage unavailable, ignore */ }
+})();
+</script>
 <title>வீட்டு நிதி கணக்கு / Home Finance Ledger</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#2B4570">
@@ -127,7 +138,46 @@ button,input,select,textarea{ font-family:inherit; }
   background:var(--turmeric); border-radius:3px 3px 0 0;
 }
 
+/* ---- Menu pin/collapse control (shared by mobile bar + desktop sidebar) ---- */
+.nav-pin-btn{
+  flex:0 0 auto; display:flex; align-items:center; justify-content:center;
+  border:none; background:transparent; color:var(--ink-soft); cursor:pointer;
+  font-size:15px; font-weight:700; padding:9px 12px; border-radius:8px;
+  transition:background .15s ease, color .15s ease;
+}
+.nav-pin-btn:hover{ background:var(--paper-deep); color:var(--indigo); }
+[data-theme="dark"] .nav-pin-btn:hover{ color:var(--indigo-deep); }
+
+/* Smooth reveal for the nav whenever it goes from collapsed -> expanded */
+.tabs{ transition:opacity .2s ease; }
+.tabs.nav-reveal{ animation:navSlideIn .28s ease; }
+@keyframes navSlideIn{ from{ opacity:0; transform:translateY(-8px); } to{ opacity:1; transform:translateY(0); } }
+@media (prefers-reduced-motion: reduce){ .tabs.nav-reveal{ animation:none; } }
+
+/* Floating button shown only while the menu is collapsed */
+.nav-fab{
+  display:none; position:fixed; z-index:80; border:none; cursor:pointer;
+  align-items:center; justify-content:center; background:var(--indigo); color:#F3EEDF;
+  box-shadow:var(--shadow-lift); transition:background .15s ease, transform .15s ease;
+}
+.nav-fab:hover{ transform:scale(1.06); }
+[data-theme="dark"] .nav-fab{ background:var(--indigo-deep); color:#14100B; }
+html.nav-collapsed .nav-fab{ display:flex; }
+
 main{ padding:20px 16px 0; }
+
+/* ---- Menu collapse — narrow screens ----
+   Expanded (default) is pixel-identical to the original always-on top bar;
+   nothing here changes that state. Collapsed simply removes the bar so
+   content uses the full width, with a small floating button on the left
+   edge to bring it back (it slides/fades back in via .nav-reveal above). */
+@media (max-width:879.98px){
+  html.nav-collapsed .tabs{ display:none; }
+  .nav-pin-btn{ border-right:1.5px solid var(--line); margin-right:6px; }
+  .nav-fab{
+    left:14px; bottom:18px; width:50px; height:50px; border-radius:999px; font-size:19px;
+  }
+}
 
 /* ---- Side menu layout (wider screens) ----
    Below the header, the tab bar becomes a vertical sidebar on the left and
@@ -144,6 +194,7 @@ main{ padding:20px 16px 0; }
       "tabs   main"
       "footer footer";
     align-items:start;
+    transition:grid-template-columns .25s ease;
   }
   .app-header{ grid-area:header; }
   footer{ grid-area:footer; }
@@ -155,7 +206,9 @@ main{ padding:20px 16px 0; }
     border-bottom:none; border-right:1.5px solid var(--line);
     position:sticky; top:0; align-self:start;
     height:100vh; overflow-y:auto;
+    transition:opacity .2s ease, padding .2s ease;
   }
+  .nav-pin-btn{ justify-content:flex-start; margin-bottom:6px; }
   .tab-btn{
     justify-content:flex-start; width:100%; padding:11px 14px;
     border-bottom:none; border-radius:10px;
@@ -166,7 +219,21 @@ main{ padding:20px 16px 0; }
   [data-theme="dark"] .tab-btn.active{ background:var(--turmeric-bg); }
   .tab-btn.active::after{ display:none; }
 
-  main{ grid-area:main; padding:20px 24px 0; }
+  main{ grid-area:main; padding:20px 24px 0; transition:padding .2s ease; }
+
+  /* Collapsed: sidebar column shrinks to 0 and content auto-expands to
+     fill the freed width; the nav itself fades/clips so nothing peeks
+     through, and a floating pin button sits on the left edge to reopen. */
+  html.nav-collapsed .app{ grid-template-columns:0px 1fr; }
+  html.nav-collapsed .tabs{
+    opacity:0; pointer-events:none; padding-left:0; padding-right:0;
+    border-right:none; overflow:hidden;
+  }
+  .nav-fab{
+    left:0; top:50%; transform:translateY(-50%);
+    width:26px; height:64px; border-radius:0 999px 999px 0; font-size:15px;
+  }
+  .nav-fab:hover{ width:32px; transform:translateY(-50%); }
 }
 .tab-panel{ display:none; animation:fadeIn .25s ease; }
 .tab-panel.active{ display:block; }
@@ -391,6 +458,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 
   <!-- TABS -->
   <nav class="tabs" id="tabs">
+    <button class="nav-pin-btn" id="navCollapseBtn" type="button" aria-label="Collapse menu" aria-controls="tabs" aria-expanded="true" title="Collapse menu"><span class="ic">«</span></button>
     <button class="tab-btn active" data-tab="dashboard"><span class="ic">🏠</span><span data-i18n="tabDashboard">Home</span></button>
     <button class="tab-btn" data-tab="income"><span class="ic">💰</span><span data-i18n="tabIncome">Income</span></button>
     <button class="tab-btn" data-tab="expense"><span class="ic">🧾</span><span data-i18n="tabExpense">Expense</span></button>
@@ -401,6 +469,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
     <button class="tab-btn" data-tab="reports"><span class="ic">📊</span><span data-i18n="tabReports">Reports</span></button>
     <button class="tab-btn" data-tab="settings"><span class="ic">⚙️</span><span data-i18n="tabSettings">Settings</span></button>
   </nav>
+  <button class="nav-fab" id="navFab" type="button" aria-label="Open menu" aria-controls="tabs" aria-expanded="false" title="Open menu"><span class="ic">☰</span></button>
 
   <main>
     <!-- ================= DASHBOARD ================= -->
@@ -1799,6 +1868,34 @@ function confirmClearAll(){
     }
   });
 }
+
+/* ---------------------------- Menu pin/collapse (shared desktop + mobile state) ----------------------------
+   One boolean, `menuCollapsed`, drives both layouts. Only CSS (see
+   .nav-collapsed rules above) decides how collapsed/expanded actually
+   look on a given screen size — the state and the toggle logic here are
+   identical for desktop and mobile. */
+const MENU_STORAGE_KEY = 'finLedger.menuCollapsed';
+function getStoredMenuCollapsed(){
+  try{ return localStorage.getItem(MENU_STORAGE_KEY) === '1'; }catch(e){ return false; }
+}
+function setMenuCollapsed(collapsed, opts={}){
+  document.documentElement.classList.toggle('nav-collapsed', collapsed);
+  try{ localStorage.setItem(MENU_STORAGE_KEY, collapsed ? '1' : '0'); }catch(e){ /* storage unavailable, ignore */ }
+  const fab = document.getElementById('navFab');
+  const pinBtn = document.getElementById('navCollapseBtn');
+  const tabs = document.getElementById('tabs');
+  fab?.setAttribute('aria-expanded', String(!collapsed));
+  pinBtn?.setAttribute('aria-expanded', String(!collapsed));
+  if(!collapsed && !opts.silent && tabs){
+    // Restart the reveal animation so reopening always slides/fades in smoothly.
+    tabs.classList.remove('nav-reveal');
+    void tabs.offsetWidth;
+    tabs.classList.add('nav-reveal');
+  }
+}
+document.getElementById('navCollapseBtn')?.addEventListener('click', ()=> setMenuCollapsed(true));
+document.getElementById('navFab')?.addEventListener('click', ()=> setMenuCollapsed(false));
+setMenuCollapsed(getStoredMenuCollapsed(), {silent:true});
 
 /* ---------------------------- Tabs & init ---------------------------- */
 document.querySelectorAll('.tab-btn').forEach(btn=>{
