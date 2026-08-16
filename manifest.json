@@ -1,0 +1,18 @@
+{
+  "name": "Home Finance Ledger / வீட்டு நிதி கணக்கு",
+  "short_name": "Finance Ledger",
+  "description": "Track family income, expenses, savings, loans and budget in Tamil & English.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F7EFDC",
+  "theme_color": "#2B4570",
+  "lang": "ta",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
