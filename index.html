@@ -5,12 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <script>
 // Restore the nav collapsed/expanded state before first paint so there is
-// no flash of the wrong layout. Kept intentionally tiny and dependency-free.
+// no flash of the wrong layout. If nothing is saved yet, default mobile to
+// a closed drawer (tap-to-open, like a standard hamburger menu) and desktop
+// to an open sidebar. Kept intentionally tiny and dependency-free.
 (function(){
   try{
-    if(localStorage.getItem('finLedger.menuCollapsed') === '1'){
-      document.documentElement.classList.add('nav-collapsed');
-    }
+    var v = localStorage.getItem('finLedger.menuCollapsed');
+    var collapsed = (v === null) ? (window.innerWidth < 880) : (v === '1');
+    if(collapsed) document.documentElement.classList.add('nav-collapsed');
   }catch(e){ /* storage unavailable, ignore */ }
 })();
 </script>
@@ -165,26 +167,47 @@ button,input,select,textarea{ font-family:inherit; }
 html.nav-collapsed .nav-fab{ display:flex; }
 
 main{ padding:20px 16px 0; }
+.nav-backdrop{ display:none; }
 
-/* ---- Menu collapse — narrow screens ----
-   Expanded (default) is pixel-identical to the original always-on top bar;
-   nothing here changes that state. Collapsed slides the bar up and out
-   (mirroring the desktop sidebar's width-slide) rather than snapping away,
-   with a small floating button on the left edge to bring it back. */
+/* ---- Menu drawer — narrow screens ----
+   Same nav, same tab-btn items — on narrow screens it becomes a left-side
+   drawer that slides over the content with a dark scrim behind it, closed
+   by default and opened via the floating hamburger button. */
 @media (max-width:879.98px){
   .tabs{
-    max-height:130px; overflow-y:hidden;
-    transition:max-height .3s ease, opacity .25s ease, padding .25s ease, border-color .25s ease;
+    position:fixed; top:0; left:0; bottom:0; z-index:100;
+    width:min(78vw,300px); height:100%; max-height:none;
+    flex-direction:column; align-items:stretch; overflow-x:visible; overflow-y:auto;
+    padding:22px 14px; gap:3px; margin:0;
+    background:var(--card); border-bottom:none;
+    border-radius:0 22px 22px 0; box-shadow:var(--shadow-lift);
+    transform:translateX(-100%);
+    transition:transform .3s ease;
   }
-  html.nav-collapsed .tabs{
-    max-height:0; opacity:0; padding-top:0; padding-bottom:0;
-    border-bottom-color:transparent; pointer-events:none;
-  }
+  html:not(.nav-collapsed) .tabs{ transform:translateX(0); }
   .tabs.nav-reveal{ animation:none; }
-  .nav-pin-btn{ border-right:1.5px solid var(--line); margin-right:6px; }
-  .nav-fab{
-    left:14px; bottom:18px; width:50px; height:50px; border-radius:999px; font-size:19px;
+
+  .tab-btn{
+    justify-content:flex-start; width:100%; padding:12px 14px;
+    border-bottom:none; border-radius:10px; border-left:3px solid transparent;
   }
+  .tab-btn:hover{ background:var(--paper-deep); }
+  .tab-btn.active{ background:var(--turmeric-bg); border-left-color:var(--turmeric); }
+  .tab-btn.active::after{ display:none; }
+
+  .nav-pin-btn{
+    align-self:flex-end; border-right:none; margin:0 0 10px; font-size:16px;
+    width:34px; height:34px; border-radius:999px; background:var(--paper-deep);
+  }
+
+  /* Dark scrim behind the open drawer; tapping it closes the menu */
+  .nav-backdrop{
+    display:block; position:fixed; inset:0; z-index:90; background:rgba(20,15,10,.45);
+    opacity:0; pointer-events:none; transition:opacity .3s ease;
+  }
+  html:not(.nav-collapsed) .nav-backdrop{ opacity:1; pointer-events:auto; }
+
+  .nav-fab{ left:14px; bottom:18px; width:50px; height:50px; border-radius:999px; font-size:19px; }
 }
 
 /* ---- Side menu layout (wider screens) ----
@@ -477,6 +500,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
     <button class="tab-btn" data-tab="reports"><span class="ic">📊</span><span data-i18n="tabReports">Reports</span></button>
     <button class="tab-btn" data-tab="settings"><span class="ic">⚙️</span><span data-i18n="tabSettings">Settings</span></button>
   </nav>
+  <div class="nav-backdrop" id="navBackdrop"></div>
   <button class="nav-fab" id="navFab" type="button" aria-label="Open menu" aria-controls="tabs" aria-expanded="false" title="Open menu"><span class="ic">☰</span></button>
 
   <main>
@@ -1881,10 +1905,14 @@ function confirmClearAll(){
    One boolean, `menuCollapsed`, drives both layouts. Only CSS (see
    .nav-collapsed rules above) decides how collapsed/expanded actually
    look on a given screen size — the state and the toggle logic here are
-   identical for desktop and mobile. */
+   identical for desktop and mobile. If nothing is saved yet, mobile
+   defaults to a closed drawer and desktop to an open sidebar. */
 const MENU_STORAGE_KEY = 'finLedger.menuCollapsed';
 function getStoredMenuCollapsed(){
-  try{ return localStorage.getItem(MENU_STORAGE_KEY) === '1'; }catch(e){ return false; }
+  try{
+    const v = localStorage.getItem(MENU_STORAGE_KEY);
+    return v === null ? window.innerWidth < 880 : v === '1';
+  }catch(e){ return window.innerWidth < 880; }
 }
 function setMenuCollapsed(collapsed, opts={}){
   document.documentElement.classList.toggle('nav-collapsed', collapsed);
@@ -1894,6 +1922,8 @@ function setMenuCollapsed(collapsed, opts={}){
   const tabs = document.getElementById('tabs');
   fab?.setAttribute('aria-expanded', String(!collapsed));
   pinBtn?.setAttribute('aria-expanded', String(!collapsed));
+  // Lock background scroll only while acting as a mobile overlay drawer.
+  document.body.style.overflow = (!collapsed && window.innerWidth < 880) ? 'hidden' : '';
   if(!collapsed && !opts.silent && tabs){
     // Restart the reveal animation so reopening always slides/fades in smoothly.
     tabs.classList.remove('nav-reveal');
@@ -1903,6 +1933,7 @@ function setMenuCollapsed(collapsed, opts={}){
 }
 document.getElementById('navCollapseBtn')?.addEventListener('click', ()=> setMenuCollapsed(true));
 document.getElementById('navFab')?.addEventListener('click', ()=> setMenuCollapsed(false));
+document.getElementById('navBackdrop')?.addEventListener('click', ()=> setMenuCollapsed(true));
 setMenuCollapsed(getStoredMenuCollapsed(), {silent:true});
 
 /* ---------------------------- Tabs & init ---------------------------- */
@@ -1915,6 +1946,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     if(btn.dataset.tab==='reports') renderReports();
     if(btn.dataset.tab==='dashboard') renderDashboardCharts();
     if(btn.dataset.tab==='settings') renderBillReminderSettings();
+    if(window.innerWidth < 880) setMenuCollapsed(true);
   });
 });
 
