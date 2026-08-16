@@ -168,11 +168,19 @@ main{ padding:20px 16px 0; }
 
 /* ---- Menu collapse — narrow screens ----
    Expanded (default) is pixel-identical to the original always-on top bar;
-   nothing here changes that state. Collapsed simply removes the bar so
-   content uses the full width, with a small floating button on the left
-   edge to bring it back (it slides/fades back in via .nav-reveal above). */
+   nothing here changes that state. Collapsed slides the bar up and out
+   (mirroring the desktop sidebar's width-slide) rather than snapping away,
+   with a small floating button on the left edge to bring it back. */
 @media (max-width:879.98px){
-  html.nav-collapsed .tabs{ display:none; }
+  .tabs{
+    max-height:130px; overflow-y:hidden;
+    transition:max-height .3s ease, opacity .25s ease, padding .25s ease, border-color .25s ease;
+  }
+  html.nav-collapsed .tabs{
+    max-height:0; opacity:0; padding-top:0; padding-bottom:0;
+    border-bottom-color:transparent; pointer-events:none;
+  }
+  .tabs.nav-reveal{ animation:none; }
   .nav-pin-btn{ border-right:1.5px solid var(--line); margin-right:6px; }
   .nav-fab{
     left:14px; bottom:18px; width:50px; height:50px; border-radius:999px; font-size:19px;
@@ -794,7 +802,7 @@ function fromDbRow(tableKey, row){
 /* ---------------------------- Translations ---------------------------- */
 const T = {
   en: {
-    appTitle:"Home Finance", appTagline:"Family money, simplified",
+    appTitle:"Home Finance Ledger", appTagline:"Your family's money, in one simple book",
     tabDashboard:"Home", tabIncome:"Income", tabExpense:"Expense", tabSavings:"Savings",
     tabLoans:"Loans", tabPlanner:"Loan Planner", tabBudget:"Budget", tabReports:"Reports", tabSettings:"Settings",
     theme:"Theme", dashTitle:"This Month at a Glance",
@@ -843,7 +851,7 @@ const T = {
     saveError:"Could not save. Please try again.", deleteError:"Could not delete. Please try again.",
   },
   ta: {
-    appTitle:"வீட்டு நிதி", appTagline:"குடும்ப பணம், எளிமையாக",
+    appTitle:"வீட்டு நிதி கணக்கு", appTagline:"உங்கள் குடும்ப பணம், ஒரே புத்தகத்தில்",
     tabDashboard:"முகப்பு", tabIncome:"வருமானம்", tabExpense:"செலவு", tabSavings:"சேமிப்பு",
     tabLoans:"கடன்", tabPlanner:"கடன் திட்டம்", tabBudget:"பட்ஜெட்", tabReports:"அறிக்கைகள்", tabSettings:"அமைப்புகள்",
     theme:"தீம்", dashTitle:"இந்த மாத சுருக்கம்",
