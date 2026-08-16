@@ -149,6 +149,12 @@ button,input,select,textarea{ font-family:inherit; }
 }
 .nav-pin-btn:hover{ background:var(--paper-deep); color:var(--indigo); }
 [data-theme="dark"] .nav-pin-btn:hover{ color:var(--indigo-deep); }
+.nav-pin-btn .ic-desktop{ display:none; }
+.nav-pin-btn .ic-mobile{ display:inline; }
+@media (min-width:880px){
+  .nav-pin-btn .ic-desktop{ display:inline; }
+  .nav-pin-btn .ic-mobile{ display:none; }
+}
 
 /* Smooth reveal for the nav whenever it goes from collapsed -> expanded */
 .tabs{ transition:opacity .2s ease; }
@@ -182,7 +188,7 @@ main{ padding:20px 16px 0; }
     background:var(--card); border-bottom:none;
     border-radius:0 22px 22px 0; box-shadow:var(--shadow-lift);
     transform:translateX(-100%);
-    transition:transform .3s ease;
+    transition:transform .32s cubic-bezier(.4,0,.2,1);
   }
   html:not(.nav-collapsed) .tabs{ transform:translateX(0); }
   .tabs.nav-reveal{ animation:none; }
@@ -203,7 +209,7 @@ main{ padding:20px 16px 0; }
   /* Dark scrim behind the open drawer; tapping it closes the menu */
   .nav-backdrop{
     display:block; position:fixed; inset:0; z-index:90; background:rgba(20,15,10,.45);
-    opacity:0; pointer-events:none; transition:opacity .3s ease;
+    opacity:0; pointer-events:none; transition:opacity .32s cubic-bezier(.4,0,.2,1);
   }
   html:not(.nav-collapsed) .nav-backdrop{ opacity:1; pointer-events:auto; }
 
@@ -489,7 +495,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 
   <!-- TABS -->
   <nav class="tabs" id="tabs">
-    <button class="nav-pin-btn" id="navCollapseBtn" type="button" aria-label="Collapse menu" aria-controls="tabs" aria-expanded="true" title="Collapse menu"><span class="ic">«</span></button>
+    <button class="nav-pin-btn" id="navCollapseBtn" type="button" aria-label="Collapse menu" aria-controls="tabs" aria-expanded="true" title="Collapse menu"><span class="ic ic-desktop">«</span><span class="ic ic-mobile">✕</span></button>
     <button class="tab-btn active" data-tab="dashboard"><span class="ic">🏠</span><span data-i18n="tabDashboard">Home</span></button>
     <button class="tab-btn" data-tab="income"><span class="ic">💰</span><span data-i18n="tabIncome">Income</span></button>
     <button class="tab-btn" data-tab="expense"><span class="ic">🧾</span><span data-i18n="tabExpense">Expense</span></button>
@@ -826,9 +832,9 @@ function fromDbRow(tableKey, row){
 /* ---------------------------- Translations ---------------------------- */
 const T = {
   en: {
-    appTitle:"Home Finance", appTagline:"Family money, simplified",
+    appTitle:"Home Finance Ledger", appTagline:"Your family's money, in one simple book",
     tabDashboard:"Home", tabIncome:"Income", tabExpense:"Expense", tabSavings:"Savings",
-    tabLoans:"Loans", tabPlanner:"LoanPlan", tabBudget:"Budget", tabReports:"Reports", tabSettings:"Settings",
+    tabLoans:"Loans", tabPlanner:"Loan Planner", tabBudget:"Budget", tabReports:"Reports", tabSettings:"Settings",
     theme:"Theme", dashTitle:"This Month at a Glance",
     statIncome:"Total Income", statExpense:"Total Expense", statSavings:"Total Savings",
     statLoan:"Total Loan Balance", statBalance:"This Month Balance", statSavingsPct:"Savings Percentage",
@@ -875,9 +881,9 @@ const T = {
     saveError:"Could not save. Please try again.", deleteError:"Could not delete. Please try again.",
   },
   ta: {
-    appTitle:"வீட்டு நிதி", appTagline:"குடும்ப பணம், எளிமையாக",
+    appTitle:"வீட்டு நிதி கணக்கு", appTagline:"உங்கள் குடும்ப பணம், ஒரே புத்தகத்தில்",
     tabDashboard:"முகப்பு", tabIncome:"வருமானம்", tabExpense:"செலவு", tabSavings:"சேமிப்பு",
-    tabLoans:"கடன்", tabPlanner:"கடன்திட்டம்", tabBudget:"பட்ஜெட்", tabReports:"அறிக்கைகள்", tabSettings:"அமைப்புகள்",
+    tabLoans:"கடன்", tabPlanner:"கடன் திட்டம்", tabBudget:"பட்ஜெட்", tabReports:"அறிக்கைகள்", tabSettings:"அமைப்புகள்",
     theme:"தீம்", dashTitle:"இந்த மாத சுருக்கம்",
     statIncome:"மொத்த வருமானம்", statExpense:"மொத்த செலவு", statSavings:"மொத்த சேமிப்பு",
     statLoan:"மொத்த கடன் இருப்பு", statBalance:"இந்த மாத மீதி", statSavingsPct:"சேமிப்பு சதவீதம்",
@@ -1915,6 +1921,7 @@ function getStoredMenuCollapsed(){
   }catch(e){ return window.innerWidth < 880; }
 }
 function setMenuCollapsed(collapsed, opts={}){
+  const wasCollapsed = document.documentElement.classList.contains('nav-collapsed');
   document.documentElement.classList.toggle('nav-collapsed', collapsed);
   try{ localStorage.setItem(MENU_STORAGE_KEY, collapsed ? '1' : '0'); }catch(e){ /* storage unavailable, ignore */ }
   const fab = document.getElementById('navFab');
@@ -1922,18 +1929,42 @@ function setMenuCollapsed(collapsed, opts={}){
   const tabs = document.getElementById('tabs');
   fab?.setAttribute('aria-expanded', String(!collapsed));
   pinBtn?.setAttribute('aria-expanded', String(!collapsed));
+  const isMobile = window.innerWidth < 880;
   // Lock background scroll only while acting as a mobile overlay drawer.
-  document.body.style.overflow = (!collapsed && window.innerWidth < 880) ? 'hidden' : '';
+  document.body.style.overflow = (!collapsed && isMobile) ? 'hidden' : '';
   if(!collapsed && !opts.silent && tabs){
     // Restart the reveal animation so reopening always slides/fades in smoothly.
     tabs.classList.remove('nav-reveal');
     void tabs.offsetWidth;
     tabs.classList.add('nav-reveal');
   }
+  // Move focus into/out of the mobile drawer so keyboard & screen-reader
+  // users land somewhere sensible rather than losing their place.
+  if(!opts.silent && isMobile && wasCollapsed !== collapsed){
+    if(!collapsed){ pinBtn?.focus(); }
+    else if(tabs?.contains(document.activeElement)){ fab?.focus(); }
+  }
 }
 document.getElementById('navCollapseBtn')?.addEventListener('click', ()=> setMenuCollapsed(true));
 document.getElementById('navFab')?.addEventListener('click', ()=> setMenuCollapsed(false));
 document.getElementById('navBackdrop')?.addEventListener('click', ()=> setMenuCollapsed(true));
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape' && window.innerWidth < 880 && !document.documentElement.classList.contains('nav-collapsed')){
+    setMenuCollapsed(true);
+  }
+});
+(function(){
+  // Swipe-left on the open drawer closes it, matching standard mobile UX.
+  const tabsEl = document.getElementById('tabs');
+  let touchStartX = null;
+  tabsEl?.addEventListener('touchstart', (e)=>{ touchStartX = e.touches[0].clientX; }, {passive:true});
+  tabsEl?.addEventListener('touchend', (e)=>{
+    if(touchStartX === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    touchStartX = null;
+    if(dx < -50 && window.innerWidth < 880) setMenuCollapsed(true);
+  }, {passive:true});
+})();
 setMenuCollapsed(getStoredMenuCollapsed(), {silent:true});
 
 /* ---------------------------- Tabs & init ---------------------------- */
