@@ -328,10 +328,14 @@ main{ padding:20px 16px 0; }
 .btn:disabled{ opacity:.4; cursor:not-allowed; transform:none; }
 
 label.field{ display:block; font-size:12.5px; color:var(--ink-soft); margin-bottom:5px; font-weight:700; }
-input[type=text],input[type=number],input[type=date],input[type=password],select,textarea{
+input[type=text],input[type=number],input[type=date],input[type=password],input[type=email],input[type=tel],select,textarea{
   width:100%; padding:10px 12px; border-radius:var(--radius-sm); border:1.5px solid var(--line);
   background:var(--paper); color:var(--ink); font-size:14.5px; font-family:var(--font-body);
 }
+input[type=text]:focus,input[type=number]:focus,input[type=date]:focus,input[type=password]:focus,input[type=email]:focus,input[type=tel]:focus,select:focus,textarea:focus{
+  border-color:var(--indigo); background:var(--card);
+}
+[data-theme="dark"] input[type=text]:focus,[data-theme="dark"] input[type=number]:focus,[data-theme="dark"] input[type=date]:focus,[data-theme="dark"] input[type=password]:focus,[data-theme="dark"] input[type=email]:focus,[data-theme="dark"] input[type=tel]:focus,[data-theme="dark"] select:focus,[data-theme="dark"] textarea:focus{ border-color:var(--indigo-deep); }
 textarea{ resize:vertical; min-height:56px; }
 .field-row{ margin-bottom:12px; }
 .form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
@@ -435,6 +439,44 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 .lock-card{ background:var(--card); border-radius:var(--radius); padding:30px 26px; max-width:340px; width:100%; text-align:center; box-shadow:var(--shadow-lift); }
 .lock-card .ic{ font-size:36px; }
 
+/* ---- Auth screen (login / signup / forgot password) ---- */
+.auth-card{
+  position:relative; background:var(--card); border-radius:var(--radius); padding:34px 28px 26px;
+  max-width:380px; width:100%; text-align:center; box-shadow:var(--shadow-lift);
+  border-left:5px solid var(--turmeric); overflow:hidden;
+}
+.auth-card::before{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:5px;
+  background-image:radial-gradient(circle, var(--brass) 2.2px, transparent 2.6px);
+  background-size:5px 22px; background-position:0 10px;
+}
+.auth-card .ic{ font-size:34px; display:block; margin-bottom:6px; }
+.auth-card h3{ font-size:19px; margin:0 0 4px; }
+.auth-sub{ font-size:12px; color:var(--ink-soft); font-style:italic; margin:0 0 20px; }
+.auth-tabs{
+  display:flex; gap:4px; background:var(--paper-deep); border-radius:999px; padding:4px; margin-bottom:22px;
+}
+.auth-tab-btn{
+  flex:1; border:none; background:transparent; border-radius:999px; padding:8px 6px;
+  font-family:var(--font-display); font-size:13px; font-weight:700; color:var(--ink-soft); cursor:pointer;
+  transition:background .15s ease, color .15s ease;
+}
+.auth-tab-btn.active{ background:var(--indigo); color:#F3EEDF; box-shadow:var(--shadow); }
+[data-theme="dark"] .auth-tab-btn.active{ background:var(--indigo-deep); color:#14100B; }
+.auth-field{ position:relative; margin-bottom:13px; text-align:left; }
+.auth-field .auth-ic{
+  position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:15px; opacity:.65; pointer-events:none;
+}
+.auth-field input{ padding-left:36px !important; }
+.auth-links{ display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:16px; }
+.auth-link-btn{
+  border:none; background:transparent; color:var(--indigo); font-weight:700; font-size:12.5px;
+  cursor:pointer; font-family:var(--font-body); text-decoration:underline; text-underline-offset:3px; padding:2px;
+}
+[data-theme="dark"] .auth-link-btn{ color:var(--indigo-deep); }
+.auth-back-link{ margin-top:16px; display:inline-block; }
+.auth-card .thread-divider{ position:absolute; left:0; right:0; top:0; bottom:auto; height:14px; }
+
 .load-overlay{ position:fixed; inset:0; background:var(--paper); z-index:500; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; }
 .load-overlay .spin{ width:38px; height:38px; border-radius:50%; border:4px solid var(--line); border-top-color:var(--indigo); animation:spin 0.9s linear infinite; }
 @keyframes spin{ to{ transform:rotate(360deg); } }
@@ -466,7 +508,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 
 <div class="app">
 
-  <!-- LOCK SCREEN (optional session passcode) -->
+  <!-- LOCK SCREEN (PIN, saved to your account — asked every time the app opens) -->
   <div class="lock-screen" id="lockScreen" style="display:none;">
     <div class="lock-card">
       <div class="ic">🔒</div>
@@ -480,11 +522,62 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
     </div>
   </div>
 
+  <!-- AUTH SCREEN (multi-user login / signup / forgot-password with email OTP) -->
+  <div class="lock-screen" id="authScreen" style="display:none; z-index:500;">
+    <div class="auth-card">
+      <div class="ic">📒</div>
+      <h3 id="authTitle">வீட்டு நிதி கணக்கு</h3>
+      <p class="auth-sub">Home Finance Ledger</p>
+
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" id="authTabLogin" type="button">உள்நுழை / Login</button>
+        <button class="auth-tab-btn" id="authTabSignup" type="button">புதிய கணக்கு / Sign Up</button>
+      </div>
+
+      <div id="authLoginView">
+        <div class="auth-field"><span class="auth-ic">📧</span><input type="email" id="auth-login-email" placeholder="Email"></div>
+        <div class="auth-field"><span class="auth-ic">🔑</span><input type="password" id="auth-login-password" placeholder="கடவுச்சொல் / Password"></div>
+        <button class="btn block" id="authLoginBtn">உள்நுழை / Login</button>
+        <div class="auth-links">
+          <button class="auth-link-btn" id="authGotoForgot">கடவுச்சொல் மறந்ததா? / Forgot Password?</button>
+        </div>
+      </div>
+
+      <div id="authSignupView" style="display:none;">
+        <div class="auth-field"><span class="auth-ic">👤</span><input type="text" id="auth-signup-name" placeholder="பெயர் / Full Name"></div>
+        <div class="auth-field"><span class="auth-ic">📧</span><input type="email" id="auth-signup-email" placeholder="Email"></div>
+        <div class="auth-field"><span class="auth-ic">🔑</span><input type="password" id="auth-signup-password" placeholder="கடவுச்சொல் (6+) / Password (6+ chars)"></div>
+        <button class="btn block" id="authSignupBtn">கணக்கு உருவாக்கு / Create Account</button>
+      </div>
+
+      <div id="authForgotView" style="display:none;">
+        <div id="authForgotStep1">
+          <p class="lang-note" style="margin-bottom:14px;">உங்கள் மின்னஞ்சலுக்கு 6-இலக்க குறியீடு அனுப்பப்படும் / We'll email you a 6-digit code.</p>
+          <div class="auth-field"><span class="auth-ic">📧</span><input type="email" id="auth-forgot-email" placeholder="Email"></div>
+          <button class="btn block" id="authSendOtpBtn">குறியீடு அனுப்பு / Send Code</button>
+        </div>
+        <div id="authForgotStep2" style="display:none;">
+          <p class="lang-note" style="margin-bottom:14px;">குறியீடு &amp; புதிய கடவுச்சொல் / Enter the code &amp; new password.</p>
+          <div class="auth-field"><span class="auth-ic">🔢</span><input type="text" id="auth-forgot-otp" inputmode="numeric" placeholder="OTP Code"></div>
+          <div class="auth-field"><span class="auth-ic">🔑</span><input type="password" id="auth-forgot-newpass" placeholder="புதிய கடவுச்சொல் / New Password"></div>
+          <button class="btn block" id="authResetPassBtn">மீட்டமை / Reset Password</button>
+        </div>
+        <div class="auth-back-link">
+          <button class="auth-link-btn" id="authGotoLogin2">← உள்நுழைவுக்குத் திரும்பு / Back to Login</button>
+        </div>
+      </div>
+
+      <div id="authError" style="color:var(--ledger-red); font-size:12.5px; margin-top:14px; display:none;"></div>
+    </div>
+  </div>
+
   <!-- HEADER -->
   <header class="app-header">
     <div class="header-top">
       <button class="icon-toggle" id="langToggle">🌐 <span id="langToggleLabel">EN</span></button>
       <button class="icon-toggle" id="themeToggle">🌗 <span id="themeToggleLabel" data-i18n="theme">Theme</span></button>
+      <button class="icon-toggle" id="headerLockBtn" title="Lock">🔒</button>
+      <button class="icon-toggle" id="headerLogoutBtn" title="Logout">🚪</button>
     </div>
     <div class="app-title">📒 <span data-i18n="appTitle">Home Finance Ledger / வீட்டு நிதி கணக்கு</span></div>
     <div class="app-tagline" data-i18n="appTagline">Your family's money, in one simple book / உங்கள் குடும்ப பணம், ஒரே புத்தகத்தில்</div>
@@ -674,8 +767,16 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
       </div>
 
       <div class="card">
+        <h3 style="font-size:15px; margin-bottom:10px;">கணக்கு / Account</h3>
+        <p class="lang-note" id="accountEmailDisplay" style="margin-bottom:10px;"></p>
+        <div class="settings-actions">
+          <button class="btn ghost sm" onclick="logout()">வெளியேறு / Logout</button>
+        </div>
+      </div>
+
+      <div class="card">
         <h3 style="font-size:15px; margin-bottom:10px;" data-i18n="security">Security</h3>
-        <p class="lang-note" data-i18n="securityNote" style="margin-bottom:10px;">A simple passcode lock for this session only. Your data now lives in your Supabase database and is shared by anyone with this app link — the lock resets whenever the page reloads.</p>
+        <p class="lang-note" data-i18n="securityNote" style="margin-bottom:10px;">A PIN lock saved to your account — you'll be asked for it every time you open the app, on any device.</p>
         <div class="form-grid">
           <div class="field-row"><label class="field" data-i18n="setPasscode">Set Passcode</label><input type="password" id="set-passcode" inputmode="numeric" placeholder="••••"></div>
         </div>
@@ -715,6 +816,19 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
   <footer>
     <span data-i18n="footerText">Made for families, in Tamil &amp; English 🪔</span>
   </footer>
+</div>
+
+<!-- CATEGORY MODAL (add a new category, saved to Supabase) -->
+<div class="modal-backdrop" id="categoryModalBackdrop">
+  <div class="modal">
+    <h3>புதிய வகை சேர் (Add New Category)</h3>
+    <div class="field-row"><label class="field">தமிழ் பெயர் (Tamil Name)</label><input type="text" id="cat-modal-ta" placeholder="எ.கா. உணவு"></div>
+    <div class="field-row"><label class="field">English Name</label><input type="text" id="cat-modal-en" placeholder="e.g. Food"></div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeCategoryModal()" data-i18n="cancelBtn">Cancel</button>
+      <button class="btn" id="categoryModalSave" onclick="saveCategory()" data-i18n="save">Save</button>
+    </div>
+  </div>
 </div>
 
 <!-- GENERIC ENTRY MODAL -->
@@ -796,6 +910,11 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   global: { fetch: fetchWithTimeout }
 });
 
+/* ---------------------------- Auth state ---------------------------- */
+let currentUser = null; // the logged-in Supabase auth user; every table's
+// rows are scoped to this user via Postgres Row-Level Security (see the
+// SQL setup notes), so each login only ever sees their own transactions.
+
 /* Map camelCase JS field names <-> snake_case DB column names, per table. */
 const FIELD_MAP = {
   loans:   { interestPct:'interest_pct', startDate:'start_date', endDate:'end_date' },
@@ -858,16 +977,16 @@ const T = {
     expectedIncome:"Expected Income (₹)", expectedExpense:"Expected Expense (₹)", expectedSavings:"Expected Savings (₹)",
     month:"Month", actual:"Actual", expected:"Expected", statusSafe:"Safe", statusWarning:"Warning", statusOver:"Over Budget",
     languageTheme:"Language & Appearance", englishBtn:"English", tamilBtn:"தமிழ்", lightMode:"☀️ Light", darkMode:"🌙 Dark",
-    security:"Security", securityNote:"A simple passcode lock for this session only. Your data now lives in your Supabase database and is shared by anyone with this app link — the lock resets whenever the page reloads.",
+    security:"Security", securityNote:"A PIN lock saved to your account. You'll be asked for it every time you open the app on this or any other device.",
     setPasscode:"Set Passcode", enableLock:"Enable Lock", disableLock:"Disable Lock", lockNow:"Lock Now",
     billReminders:"Bill Reminders", billRemindersNote:"Choose which expense categories should remind you each month if unpaid.",
     savingsReminders:"Savings Reminders", savingsRemindersNote:"Choose which savings types should remind you each month if not added yet.",
     backupRestore:"Backup & Restore", backupNote:"Your data is saved automatically to your Supabase database as you go. Use these buttons for an extra offline copy, or to bulk-load a JSON export.",
     downloadBackup:"Download Backup", restoreBackup:"Restore Backup", dangerZone:"Danger Zone", clearAll:"Clear All Data",
     footerText:"Made for families, in Tamil & English 🪔",
-    lockTitle:"Enter Passcode", lockSub:"Session lock only — resets when the app reloads.", unlock:"Unlock", lockWrong:"Wrong passcode. Try again.",
+    lockTitle:"Enter Passcode", lockSub:"PIN lock for your account.", unlock:"Unlock", lockWrong:"Wrong passcode. Try again.",
     confirmTitle:"Are you sure?", confirmYes:"Yes, Delete", confirmDeleteBody:"This entry will be permanently removed from the database.",
-    confirmClearBody:"This will permanently erase ALL income, expense, savings, loan and budget data in the database for everyone using this app. This cannot be undone. Consider downloading a backup first.",
+    confirmClearBody:"This will permanently erase ALL of your income, expense, savings, loan and budget data from the database. This cannot be undone. Consider downloading a backup first.",
     savedMsg:"Saved!", deletedMsg:"Deleted.", clearedMsg:"All data cleared.", backupDownloaded:"Backup downloaded.",
     backupRestored:"Backup restored.", backupError:"Could not read that backup file.", lockEnabled:"Passcode lock enabled and applied now.",
     lockDisabled:"Passcode lock disabled.", enterPasscode:"Enter a passcode first.", noPasscodeSet:"No passcode is set yet.",
@@ -879,6 +998,8 @@ const T = {
     fillRequired:"Please fill all required fields with valid values.",
     loadError:"Could not load data from the database. Check your connection and reload.",
     saveError:"Could not save. Please try again.", deleteError:"Could not delete. Please try again.",
+    otpSent:"OTP code sent to your email.", passwordReset:"Password reset. You're logged in.",
+    loadingLedger:"Loading your ledger…",
   },
   ta: {
     appTitle: "வீட்டு நிதி",appTagline: "பணம், எளிமையாக",
@@ -907,16 +1028,16 @@ const T = {
     expectedIncome:"எதிர்பார்க்கும் வருமானம் (₹)", expectedExpense:"எதிர்பார்க்கும் செலவு (₹)", expectedSavings:"எதிர்பார்க்கும் சேமிப்பு (₹)",
     month:"மாதம்", actual:"நடப்பு", expected:"எதிர்பார்ப்பு", statusSafe:"பாதுகாப்பு", statusWarning:"எச்சரிக்கை", statusOver:"பட்ஜெட் மீறல்",
     languageTheme:"மொழி & தோற்றம்", englishBtn:"English", tamilBtn:"தமிழ்", lightMode:"☀️ லைட்", darkMode:"🌙 டார்க்",
-    security:"பாதுகாப்பு", securityNote:"இது இந்த அமர்விற்கு மட்டுமான எளிய பாஸ்கோட் பூட்டு. உங்கள் தரவு இப்போது உங்கள் Supabase தரவுத்தளத்தில் சேமிக்கப்படுகிறது, இந்த ஆப் லிங்க் உள்ள அனைவருக்கும் பகிரப்படுகிறது — பக்கத்தை மீண்டும் ஏற்றும்போது பூட்டு மீட்டமைக்கப்படும்.",
+    security:"பாதுகாப்பு", securityNote:"உங்கள் கணக்கில் சேமிக்கப்பட்ட PIN பூட்டு. இந்த ஆப்பை எந்த சாதனத்தில் திறந்தாலும் ஒவ்வொரு முறையும் இது கேட்கப்படும்.",
     setPasscode:"பாஸ்கோட் அமை", enableLock:"பூட்டை இயக்கு", disableLock:"பூட்டை நிறுத்து", lockNow:"இப்போது பூட்டு",
     billReminders:"பில் நினைவூட்டல்கள்", billRemindersNote:"ஒவ்வொரு மாதமும் செலுத்தப்படாவிட்டால் எந்த செலவு வகைகள் உங்களுக்கு நினைவூட்ட வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும்.",
     savingsReminders:"சேமிப்பு நினைவூட்டல்கள்", savingsRemindersNote:"ஒவ்வொரு மாதமும் இன்னும் சேர்க்கப்படாவிட்டால் எந்த சேமிப்பு வகைகள் உங்களுக்கு நினைவூட்ட வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும்.",
     backupRestore:"காப்பு & மீட்டமை", backupNote:"உங்கள் தரவு தானாகவே உங்கள் Supabase தரவுத்தளத்தில் சேமிக்கப்படுகிறது. கூடுதல் ஆஃப்லைன் நகல் அல்லது JSON மீட்டமைப்புக்கு இந்த பொத்தான்களைப் பயன்படுத்தவும்.",
     downloadBackup:"காப்பு பதிவிறக்கு", restoreBackup:"காப்பை மீட்டமை", dangerZone:"ஆபத்து மண்டலம்", clearAll:"அனைத்து தரவையும் அழி",
     footerText:"தமிழிலும் ஆங்கிலத்திலும், குடும்பங்களுக்காக 🪔",
-    lockTitle:"பாஸ்கோட் உள்ளிடவும்", lockSub:"இது அமர்வு பூட்டு மட்டுமே — மீண்டும் ஏற்றும்போது மீட்டமையும்.", unlock:"திற", lockWrong:"தவறான பாஸ்கோட். மீண்டும் முயற்சிக்கவும்.",
+    lockTitle:"பாஸ்கோட் உள்ளிடவும்", lockSub:"உங்கள் கணக்கிற்கான PIN பூட்டு.", unlock:"திற", lockWrong:"தவறான பாஸ்கோட். மீண்டும் முயற்சிக்கவும்.",
     confirmTitle:"நிச்சயமா?", confirmYes:"ஆம், நீக்கு", confirmDeleteBody:"இந்த பதிவு தரவுத்தளத்திலிருந்து நிரந்தரமாக நீக்கப்படும்.",
-    confirmClearBody:"இது இந்த ஆப்பைப் பயன்படுத்தும் அனைவருக்குமான அனைத்து வருமானம், செலவு, சேமிப்பு, கடன் மற்றும் பட்ஜெட் தரவையும் தரவுத்தளத்திலிருந்து நிரந்தரமாக அழிக்கும். இதை மீட்க முடியாது. முதலில் காப்பு பதிவிறக்கம் செய்யவும்.",
+    confirmClearBody:"இது உங்கள் அனைத்து வருமானம், செலவு, சேமிப்பு, கடன் மற்றும் பட்ஜெட் தரவையும் தரவுத்தளத்திலிருந்து நிரந்தரமாக அழிக்கும். இதை மீட்க முடியாது. முதலில் காப்பு பதிவிறக்கம் செய்யவும்.",
     savedMsg:"சேமிக்கப்பட்டது!", deletedMsg:"நீக்கப்பட்டது.", clearedMsg:"அனைத்து தரவும் அழிக்கப்பட்டது.", backupDownloaded:"காப்பு பதிவிறக்கப்பட்டது.",
     backupRestored:"காப்பு மீட்டமைக்கப்பட்டது.", backupError:"அந்த காப்பு கோப்பைப் படிக்க முடியவில்லை.", lockEnabled:"பாஸ்கோட் பூட்டு இயக்கப்பட்டு இப்போதே செயல்படுத்தப்பட்டது.",
     lockDisabled:"பாஸ்கோட் பூட்டு நிறுத்தப்பட்டது.", enterPasscode:"முதலில் ஒரு பாஸ்கோட் உள்ளிடவும்.", noPasscodeSet:"பாஸ்கோட் இன்னும் அமைக்கப்படவில்லை.",
@@ -928,6 +1049,8 @@ const T = {
     fillRequired:"தேவையான அனைத்து புலங்களையும் சரியாக நிரப்பவும்.",
     loadError:"தரவுத்தளத்திலிருந்து தரவை ஏற்ற முடியவில்லை. இணைப்பை சரிபார்த்து மீண்டும் ஏற்றவும்.",
     saveError:"சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.", deleteError:"நீக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
+    otpSent:"OTP குறியீடு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டது.", passwordReset:"கடவுச்சொல் மீட்டமைக்கப்பட்டது. நீங்கள் உள்நுழைந்துவிட்டீர்கள்.",
+    loadingLedger:"உங்கள் கணக்கு ஏற்றப்படுகிறது…",
   }
 };
 
@@ -954,6 +1077,15 @@ const LOAN_TYPES = [
   {en:"Vehicle Loan", ta:"வாகனக் கடன்"}, {en:"Friend Loan", ta:"நண்பர் கடன்"}, {en:"Relative Loan", ta:"உறவினர் கடன்"},
   {en:"Finance Loan", ta:"நிதி நிறுவனக் கடன்"}, {en:"Credit Card", ta:"கிரெடிட் கார்டு"}, {en:"Other Loan", ta:"பிற கடன்"},
 ];
+// Custom, user-created categories (see the Category modal) are pushed
+// straight into these same arrays after loading from Supabase, so every
+// existing consumer of INCOME_CATS/EXPENSE_CATS/SAVINGS_TYPES/LOAN_TYPES —
+// dropdowns, labels, reminder settings, reports — picks them up for free.
+const CATEGORY_LISTS = { income:INCOME_CATS, expense:EXPENSE_CATS, savings:SAVINGS_TYPES, loans:LOAN_TYPES };
+const CATEGORY_BASE_LEN = {
+  income: INCOME_CATS.length, expense: EXPENSE_CATS.length,
+  savings: SAVINGS_TYPES.length, loans: LOAN_TYPES.length,
+};
 const DEFAULT_RECURRING_BILL_CATS = ["EB Bill","Water Bill","Internet","Mobile Recharge"];
 const DEFAULT_SAVINGS_REMINDER_CATS = [];
 const BILL_REMINDER_STORAGE_KEY = "hfl_bill_reminder_cats_v2";
@@ -1097,6 +1229,7 @@ async function loadAllData(){
 
 async function dbInsert(tableKey, payload){
   const row = toDbRow(tableKey, payload);
+  if(currentUser) row.user_id = currentUser.id;
   const { data, error } = await supabase.from(tableKey).insert(row).select().single();
   if(error) throw error;
   return fromDbRow(tableKey, data);
@@ -1220,6 +1353,80 @@ function catOptionsHtml(cats, selected){
     return `<option value="${c.en}" ${c.en===selected?'selected':''}>${label}</option>`;
   }).join('');
 }
+// Same as a plain <select> of catOptionsHtml, plus a trailing "+ Add New
+// Category" option that opens the category modal instead of picking a value.
+function categorySelectHtml(kind, cats, selected, selectId){
+  const addLabel = lang==='ta' ? '+ புதிய வகை சேர் (Add New Category)' : '+ Add New Category';
+  return `<select id="${selectId}" data-cat-kind="${kind}" onchange="handleCatSelectChange(this)">${catOptionsHtml(cats, selected)}<option value="__add_new__">${addLabel}</option></select>`;
+}
+let pendingCatSelect = null;
+let pendingCatKind = null;
+function handleCatSelectChange(selectEl){
+  if(selectEl.value !== '__add_new__') return;
+  pendingCatSelect = selectEl;
+  pendingCatKind = selectEl.dataset.catKind;
+  // Don't leave the dropdown sitting on the "add new" placeholder while the modal is open.
+  selectEl.value = selectEl.options[0].value;
+  document.getElementById('cat-modal-en').value = '';
+  document.getElementById('cat-modal-ta').value = '';
+  document.getElementById('categoryModalBackdrop').classList.add('show');
+  setTimeout(()=> document.getElementById('cat-modal-ta').focus(), 50);
+}
+function closeCategoryModal(){
+  document.getElementById('categoryModalBackdrop').classList.remove('show');
+  pendingCatSelect = null; pendingCatKind = null;
+}
+async function saveCategory(){
+  const kind = pendingCatKind;
+  const list = CATEGORY_LISTS[kind];
+  if(!kind || !list) return;
+  const en = document.getElementById('cat-modal-en').value.trim();
+  let ta = document.getElementById('cat-modal-ta').value.trim();
+  if(!en && !ta){ toast(tText('fillRequired')); return; }
+  if(!en) { /* English is required as the storage key; fall back to the Tamil text */ }
+  const finalEn = en || ta;
+  const finalTa = ta || en;
+  if(list.some(c=>c.en.toLowerCase()===finalEn.toLowerCase())){
+    toast(biRawText('இந்த வகை ஏற்கனவே உள்ளது.','That category already exists.'));
+    return;
+  }
+  const btn = document.getElementById('categoryModalSave');
+  btn.disabled = true;
+  try{
+    const { error } = await supabase.from('custom_categories').insert({
+      user_id: currentUser.id, kind, name_en: finalEn, name_ta: finalTa,
+    });
+    if(error) throw error;
+    list.push({ en: finalEn, ta: finalTa });
+    if(pendingCatSelect){
+      const selectId = pendingCatSelect.id;
+      const newSelect = categorySelectHtml(kind, list, finalEn, selectId);
+      pendingCatSelect.outerHTML = newSelect;
+    }
+    renderBillReminderSettings();
+    closeCategoryModal();
+    toast(tText('savedMsg'));
+  }catch(err){
+    console.error(err);
+    toast(tText('saveError') + (err?.message ? ' (' + err.message + ')' : ''));
+  } finally {
+    btn.disabled = false;
+  }
+}
+/* Loaded once per login (see onAuthReady). Resets each list back to its
+   built-in base length first so re-logins never duplicate entries. */
+async function loadCustomCategoriesFromDb(){
+  if(!currentUser) return;
+  Object.entries(CATEGORY_LISTS).forEach(([kind, list])=>{ list.length = CATEGORY_BASE_LEN[kind]; });
+  try{
+    const { data, error } = await supabase.from('custom_categories').select('*').eq('user_id', currentUser.id).order('created_at', { ascending:true });
+    if(error) throw error;
+    (data||[]).forEach(row=>{
+      const list = CATEGORY_LISTS[row.kind];
+      if(list && !list.some(c=>c.en===row.name_en)) list.push({ en: row.name_en, ta: row.name_ta });
+    });
+  }catch(err){ console.error(err); }
+}
 
 function openEntryModal(moduleKey, editId){
   entryModalState = { moduleKey, editId: editId||null };
@@ -1236,7 +1443,7 @@ function openEntryModal(moduleKey, editId){
   if(moduleKey==='loans'){
     body.innerHTML = `
       <div class="field-row"><label class="field">${t('loanName')}</label><input type="text" id="f-name" value="${record?escapeHtml(record.name):''}"></div>
-      <div class="field-row"><label class="field">${t('loanType')}</label><select id="f-type">${catOptionsHtml(LOAN_TYPES, record?record.type:LOAN_TYPES[0].en)}</select></div>
+      <div class="field-row"><label class="field">${t('loanType')}</label>${categorySelectHtml('loans', LOAN_TYPES, record?record.type:LOAN_TYPES[0].en, 'f-type')}</div>
       <div class="form-grid">
         <div class="field-row"><label class="field">${t('loanAmount')}</label><input type="number" id="f-amount" min="0" value="${record?record.amount:''}"></div>
         <div class="field-row"><label class="field">${t('interestRate')}</label><input type="number" id="f-rate" min="0" step="0.01" value="${record?record.interestPct:''}"></div>
@@ -1251,7 +1458,7 @@ function openEntryModal(moduleKey, editId){
     const catFieldLabel = t('category');
     body.innerHTML = `
       <div class="field-row"><label class="field">${t('date')}</label><input type="date" id="f-date" value="${record?record.date:todayISO()}"></div>
-      <div class="field-row"><label class="field">${catFieldLabel}</label><select id="f-cat">${catOptionsHtml(mod.cats, record?(record.category||record.type):mod.cats[0].en)}</select></div>
+      <div class="field-row"><label class="field">${catFieldLabel}</label>${categorySelectHtml(moduleKey, mod.cats, record?(record.category||record.type):mod.cats[0].en, 'f-cat')}</div>
       <div class="field-row"><label class="field">${t('amount')}</label><input type="number" id="f-amount" ${isSavings?'':'min="0"'} value="${record?record.amount:''}">${isSavings?`<div class="lang-note">${lang==='ta'?'சேமிப்பிலிருந்து பணம் எடுத்தால் எதிர்மறை தொகை (உதா: -2000) உள்ளிடவும்.':'For a withdrawal from savings, enter a negative amount (e.g. -2000).'}</div>`:''}</div>
       <div class="field-row"><label class="field">${t('notes')}</label><textarea id="f-notes">${record?escapeHtml(record.notes||''):''}</textarea></div>`;
   }
@@ -1420,25 +1627,37 @@ function renderNotifications(){
   area.innerHTML = items.slice(0,6).join('');
 }
 
-/* ---------------------------- Bill / Savings Reminder settings ---------------------------- */
-function loadReminderCats(){
+/* ---------------------------- Bill / Savings Reminder settings ----------------------------
+   Now stored per-user in the `reminder_settings` Supabase table instead of
+   localStorage, so the same reminder choices follow the account across
+   devices. Falls back to the built-in defaults if nothing is saved yet. */
+async function loadReminderCatsFromDb(){
+  if(!currentUser) return;
   try{
-    const raw = localStorage.getItem(BILL_REMINDER_STORAGE_KEY);
-    if(raw){
-      const parsed = JSON.parse(raw);
-      // v2 shape: {expense:[...], savings:[...]}. Fall back gracefully if an
-      // old v1 (plain array, expense-only) value is still in storage.
-      if(Array.isArray(parsed)){
-        reminderCats = parsed.filter(c=> EXPENSE_CATS.some(ec=>ec.en===c));
-      } else if(parsed && typeof parsed==='object'){
-        if(Array.isArray(parsed.expense)) reminderCats = parsed.expense.filter(c=> EXPENSE_CATS.some(ec=>ec.en===c));
-        if(Array.isArray(parsed.savings)) savingsReminderCats = parsed.savings.filter(c=> SAVINGS_TYPES.some(sc=>sc.en===c));
-      }
+    const { data, error } = await supabase.from('reminder_settings').select('*').eq('user_id', currentUser.id).maybeSingle();
+    if(error) throw error;
+    if(data){
+      reminderCats = Array.isArray(data.expense_cats) ? data.expense_cats.filter(c=>EXPENSE_CATS.some(ec=>ec.en===c)) : [...DEFAULT_RECURRING_BILL_CATS];
+      savingsReminderCats = Array.isArray(data.savings_cats) ? data.savings_cats.filter(c=>SAVINGS_TYPES.some(sc=>sc.en===c)) : [...DEFAULT_SAVINGS_REMINDER_CATS];
+    } else {
+      reminderCats = [...DEFAULT_RECURRING_BILL_CATS];
+      savingsReminderCats = [...DEFAULT_SAVINGS_REMINDER_CATS];
+      await saveReminderCats();
     }
-  }catch(e){ /* ignore corrupt storage, fall back to defaults */ }
+  }catch(err){
+    console.error(err);
+    reminderCats = [...DEFAULT_RECURRING_BILL_CATS];
+    savingsReminderCats = [...DEFAULT_SAVINGS_REMINDER_CATS];
+  }
 }
-function saveReminderCats(){
-  try{ localStorage.setItem(BILL_REMINDER_STORAGE_KEY, JSON.stringify({expense:reminderCats, savings:savingsReminderCats})); }catch(e){ /* storage unavailable, ignore */ }
+async function saveReminderCats(){
+  if(!currentUser) return;
+  try{
+    const { error } = await supabase.from('reminder_settings').upsert({
+      user_id: currentUser.id, expense_cats: reminderCats, savings_cats: savingsReminderCats,
+    });
+    if(error) throw error;
+  }catch(err){ console.error(err); toast(tText('saveError')); }
 }
 function renderBillReminderSettings(){
   const billEl = document.getElementById('bill-reminder-list');
@@ -1468,11 +1687,11 @@ function renderBillReminderSettings(){
     }).join('');
   }
 }
-function toggleReminderCat(kind, catEn, on){
+async function toggleReminderCat(kind, catEn, on){
   const list = kind==='savings' ? savingsReminderCats : reminderCats;
   const next = on ? (list.includes(catEn) ? list : [...list, catEn]) : list.filter(c=>c!==catEn);
   if(kind==='savings') savingsReminderCats = next; else reminderCats = next;
-  saveReminderCats();
+  await saveReminderCats();
   renderNotifications();
 }
 
@@ -1799,6 +2018,20 @@ function applyTranslations(){
 }
 document.getElementById('langToggle')?.addEventListener('click', ()=> setLang(lang==='ta'?'en':'ta'));
 document.getElementById('themeToggle')?.addEventListener('click', ()=> setTheme(theme==='light'?'dark':'light'));
+document.getElementById('headerLockBtn')?.addEventListener('click', ()=>{
+  if(!passcode){
+    toast(biRawText(
+      'பூட்டு அமைக்கப்படவில்லை — அமைப்புகள் → பாதுகாப்பில் அமைக்கவும்.',
+      'No PIN set yet — set one in Settings → Security.'
+    ));
+    return;
+  }
+  lockNow();
+});
+document.getElementById('headerLogoutBtn')?.addEventListener('click', ()=>{
+  const msg = biRawText('நீங்கள் வெளியேற விரும்புகிறீர்களா?', 'Log out of your account?');
+  if(confirm(msg)) logout();
+});
 
 /* Passcode lock — session-only (kept in a JS variable, so it's forgotten on
    reload, exactly as the Security note says). "Enable Lock" now actually
@@ -1816,11 +2049,25 @@ function showLockScreen(){
   locked = true;
   setTimeout(()=> input.focus(), 50);
 }
-function enableLock(){
+/* PIN is now saved to the profiles table for the logged-in user, so it
+   persists across reloads and devices instead of resetting every session. */
+async function loadPinFromDb(){
+  if(!currentUser){ passcode = null; return; }
+  try{
+    const { data, error } = await supabase.from('profiles').select('pin_code').eq('id', currentUser.id).maybeSingle();
+    if(error) throw error;
+    passcode = data?.pin_code || null;
+  }catch(err){ console.error(err); passcode = null; }
+}
+async function enableLock(){
   const pc = document.getElementById('set-passcode').value.trim();
   if(!pc){ toast(tText('enterPasscode')); return; }
   passcode = pc;
   document.getElementById('set-passcode').value = '';
+  try{
+    const { error } = await supabase.from('profiles').update({ pin_code: pc }).eq('id', currentUser.id);
+    if(error) throw error;
+  }catch(err){ console.error(err); toast(tText('saveError')); return; }
   toast(tText('lockEnabled'));
   showLockScreen();
 }
@@ -1828,11 +2075,163 @@ function lockNow(){
   if(!passcode){ toast(tText('noPasscodeSet')); return; }
   showLockScreen();
 }
-function disableLock(){
+async function disableLock(){
   passcode = null; locked = false;
   document.getElementById('lockScreen').style.display = 'none';
+  try{
+    const { error } = await supabase.from('profiles').update({ pin_code: null }).eq('id', currentUser.id);
+    if(error) throw error;
+  }catch(err){ console.error(err); }
   toast(tText('lockDisabled'));
 }
+/* ---------------------------- Auth (multi-user login / signup / forgot-password) ---------------------------- */
+function showAuthScreen(view){
+  document.getElementById('authScreen').style.display = 'flex';
+  switchAuthView(view || 'login');
+}
+function hideAuthScreen(){ document.getElementById('authScreen').style.display = 'none'; }
+function switchAuthView(view){
+  document.getElementById('authLoginView').style.display  = view==='login'  ? '' : 'none';
+  document.getElementById('authSignupView').style.display = view==='signup' ? '' : 'none';
+  document.getElementById('authForgotView').style.display = view==='forgot' ? '' : 'none';
+  document.getElementById('authForgotStep1').style.display = '';
+  document.getElementById('authForgotStep2').style.display = 'none';
+  // The tab switcher only applies to login/signup; forgot-password hides it visually via its own back-link, but keep tab highlight sensible.
+  document.getElementById('authTabLogin').classList.toggle('active', view!=='signup');
+  document.getElementById('authTabSignup').classList.toggle('active', view==='signup');
+  const err = document.getElementById('authError'); err.style.display='none'; err.textContent='';
+}
+function authErr(msg){
+  const el = document.getElementById('authError');
+  el.textContent = msg; el.style.display = 'block';
+}
+document.getElementById('authTabLogin')?.addEventListener('click', ()=>switchAuthView('login'));
+document.getElementById('authTabSignup')?.addEventListener('click', ()=>switchAuthView('signup'));
+document.getElementById('authGotoForgot')?.addEventListener('click', ()=>switchAuthView('forgot'));
+document.getElementById('authGotoLogin2')?.addEventListener('click', ()=>switchAuthView('login'));
+
+document.getElementById('authLoginBtn')?.addEventListener('click', async ()=>{
+  const email = document.getElementById('auth-login-email').value.trim();
+  const password = document.getElementById('auth-login-password').value;
+  if(!email || !password){ authErr('மின்னஞ்சல் & கடவுச்சொல் உள்ளிடவும் / Enter email & password.'); return; }
+  const btn = document.getElementById('authLoginBtn'); btn.disabled = true;
+  try{
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if(error) throw error;
+    await onAuthReady(data.user);
+  }catch(err){ authErr(err.message || 'Login failed.'); }
+  finally{ btn.disabled = false; }
+});
+
+document.getElementById('authSignupBtn')?.addEventListener('click', async ()=>{
+  const name = document.getElementById('auth-signup-name').value.trim();
+  const email = document.getElementById('auth-signup-email').value.trim();
+  const password = document.getElementById('auth-signup-password').value;
+  if(!email || !password){ authErr('மின்னஞ்சல் & கடவுச்சொல் உள்ளிடவும் / Enter email & password.'); return; }
+  if(password.length < 6){ authErr('கடவுச்சொல் 6+ எழுத்துகள் / Password must be 6+ characters.'); return; }
+  const btn = document.getElementById('authSignupBtn'); btn.disabled = true;
+  try{
+    const { data, error } = await supabase.auth.signUp({
+      email, password, options:{ data:{ full_name: name } }
+    });
+    if(error) throw error;
+    if(data.session && data.user){
+      await onAuthReady(data.user);
+    } else {
+      // Email confirmation is required before a session exists.
+      authErr('கணக்கு உருவாக்கப்பட்டது! மின்னஞ்சலை உறுதிப்படுத்திய பின் உள்நுழையவும். / Account created! Confirm your email, then log in.');
+      switchAuthView('login');
+    }
+  }catch(err){ authErr(err.message || 'Sign up failed.'); }
+  finally{ btn.disabled = false; }
+});
+
+let _forgotEmail = null;
+document.getElementById('authSendOtpBtn')?.addEventListener('click', async ()=>{
+  const email = document.getElementById('auth-forgot-email').value.trim();
+  if(!email){ authErr('மின்னஞ்சல் உள்ளிடவும் / Enter your email.'); return; }
+  const btn = document.getElementById('authSendOtpBtn'); btn.disabled = true;
+  try{
+    // Supabase's password-recovery email delivers a 6-digit {{ .Token }}
+    // OTP code (once the "Reset Password" template in the Supabase
+    // dashboard is set to include it — see the SQL/setup notes).
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    if(error) throw error;
+    _forgotEmail = email;
+    document.getElementById('authForgotStep1').style.display = 'none';
+    document.getElementById('authForgotStep2').style.display = '';
+    toast(tText('otpSent'));
+  }catch(err){ authErr(err.message || 'Could not send code.'); }
+  finally{ btn.disabled = false; }
+});
+
+document.getElementById('authResetPassBtn')?.addEventListener('click', async ()=>{
+  const token = document.getElementById('auth-forgot-otp').value.trim();
+  const newPass = document.getElementById('auth-forgot-newpass').value;
+  if(!_forgotEmail || !token || !newPass){ authErr('குறியீடு & புதிய கடவுச்சொல் உள்ளிடவும் / Enter the code & new password.'); return; }
+  if(newPass.length < 6){ authErr('கடவுச்சொல் 6+ எழுத்துகள் / Password must be 6+ characters.'); return; }
+  const btn = document.getElementById('authResetPassBtn'); btn.disabled = true;
+  try{
+    const { data, error } = await supabase.auth.verifyOtp({ email: _forgotEmail, token, type: 'recovery' });
+    if(error) throw error;
+    const { error: updErr } = await supabase.auth.updateUser({ password: newPass });
+    if(updErr) throw updErr;
+    toast(tText('passwordReset'));
+    await onAuthReady(data.user);
+  }catch(err){ authErr(err.message || 'Reset failed.'); }
+  finally{ btn.disabled = false; }
+});
+
+async function logout(){
+  try{ await supabase.auth.signOut(); }catch(e){ console.error(e); }
+  currentUser = null; passcode = null; locked = false;
+  location.reload();
+}
+function renderAccountInfo(){
+  const el = document.getElementById('accountEmailDisplay');
+  if(el) el.textContent = currentUser?.email ? `${tText('security')}: ${currentUser.email}` : '';
+}
+async function ensureProfile(user){
+  try{
+    await supabase.from('profiles').upsert({
+      id: user.id, email: user.email, full_name: user.user_metadata?.full_name || null,
+    }, { onConflict:'id', ignoreDuplicates:false });
+  }catch(err){ console.error(err); }
+}
+/* Runs once a session exists (fresh login, signup, or a restored session on
+   page load). Loads this user's profile, PIN, reminder settings, and
+   ledger data, then reveals the app. */
+async function onAuthReady(user){
+  currentUser = user;
+  hideAuthScreen();
+  const overlay = document.getElementById('loadOverlay');
+  const overlayMsg = document.getElementById('loadOverlayMsg');
+  overlay.style.display = 'flex';
+  overlayMsg.textContent = tText('loadingLedger');
+  overlayMsg.style.color = '';
+  try{
+    await ensureProfile(user);
+    await loadPinFromDb();
+    await loadReminderCatsFromDb();
+    await loadCustomCategoriesFromDb();
+    await loadAllData();
+    renderAll();
+    renderAccountInfo();
+    overlay.style.display = 'none';
+    if(passcode) showLockScreen();
+  }catch(err){
+    console.error(err);
+    overlayMsg.textContent = tText('loadError');
+    overlayMsg.style.color = 'var(--ledger-red)';
+    const retryBtn = document.createElement('button');
+    retryBtn.className = 'btn sm';
+    retryBtn.style.marginTop = '6px';
+    retryBtn.textContent = biRawText('மீண்டும் முயற்சி','Retry');
+    retryBtn.onclick = ()=> location.reload();
+    overlay.appendChild(retryBtn);
+  }
+}
+
 document.getElementById('lockSubmit')?.addEventListener('click', tryUnlock);
 document.getElementById('lockInput')?.addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
 function tryUnlock(){
@@ -2000,20 +2399,33 @@ Object.assign(window, {
   closeConfirmModal, calcPlanner, exportCSV, exportExcel, exportPDF,
   setLang, setTheme, enableLock, disableLock, lockNow, toggleReminderCat,
   downloadBackup, restoreBackup, confirmClearAll, renderList, renderReports,
+  logout, handleCatSelectChange, closeCategoryModal, saveCategory,
+});
+
+// Keep the app in sync if the user logs out (or their session expires) in
+// another tab, or if they arrive here via a password-recovery link/OTP.
+supabase.auth.onAuthStateChange((event, session)=>{
+  if(event === 'SIGNED_OUT' && currentUser){
+    currentUser = null;
+    location.reload();
+  }
 });
 
 async function init(){
-  loadReminderCats();
   applyTranslations();
   setTheme('light');
   const overlay = document.getElementById('loadOverlay');
-  const overlayMsg = document.getElementById('loadOverlayMsg');
   try{
-    await loadAllData();
-    renderAll();
-    overlay.style.display = 'none';
+    const { data: { session } } = await supabase.auth.getSession();
+    if(session?.user){
+      await onAuthReady(session.user);
+    } else {
+      overlay.style.display = 'none';
+      showAuthScreen('login');
+    }
   } catch(err){
     console.error(err);
+    const overlayMsg = document.getElementById('loadOverlayMsg');
     overlayMsg.textContent = tText('loadError');
     overlayMsg.style.color = 'var(--ledger-red)';
     const retryBtn = document.createElement('button');
