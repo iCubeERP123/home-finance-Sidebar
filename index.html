@@ -107,13 +107,14 @@ button,input,select,textarea{ font-family:inherit; }
   background:linear-gradient(180deg, var(--indigo) 0%, #1A2E4D 100%); color:#F3EEDF;
 }
 [data-theme="dark"] .app-header{ background:linear-gradient(180deg, #14100B 0%, #0D0A07 100%); }
-.header-top{ display:flex; justify-content:flex-end; gap:8px; max-width:1040px; margin:0 auto 10px; }
+.nav-quick-row{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 12px; padding-bottom:12px; border-bottom:1.5px solid var(--line); }
 .icon-toggle{
-  border:1.5px solid rgba(243,238,223,0.35); background:rgba(255,255,255,0.08); color:#F3EEDF;
+  border:1.5px solid var(--line); background:var(--paper-deep); color:var(--ink);
   border-radius:999px; padding:6px 13px; font-size:12.5px; font-weight:700; cursor:pointer;
   display:flex; align-items:center; gap:6px; transition:background .15s ease;
 }
-.icon-toggle:hover{ background:rgba(255,255,255,0.18); }
+.icon-toggle:hover{ background:var(--turmeric-bg); }
+[data-theme="dark"] .icon-toggle{ border-color:var(--line); background:var(--paper-deep); color:var(--ink); }
 .app-title{ font-size:clamp(22px,4.4vw,32px); font-weight:800; letter-spacing:.2px; }
 .app-tagline{ margin-top:6px; font-size:14px; color:#D9CDA8; font-style:italic; }
 .thread-divider{ position:absolute; left:0; right:0; bottom:-1px; height:20px; line-height:0; }
@@ -205,6 +206,8 @@ main{ padding:20px 16px 0; }
     align-self:flex-end; border-right:none; margin:0 0 10px; font-size:16px;
     width:34px; height:34px; border-radius:999px; background:var(--paper-deep);
   }
+  .nav-quick-row{ display:grid; grid-template-columns:1fr 1fr; }
+  .nav-quick-row .icon-toggle{ justify-content:center; }
 
   /* Dark scrim behind the open drawer; tapping it closes the menu */
   .nav-backdrop{
@@ -246,6 +249,8 @@ main{ padding:20px 16px 0; }
     transition:opacity .2s ease, padding .2s ease;
   }
   .nav-pin-btn{ justify-content:flex-start; margin-bottom:6px; }
+  .nav-quick-row{ display:grid; grid-template-columns:1fr 1fr; }
+  .nav-quick-row .icon-toggle{ justify-content:center; }
   .tab-btn{
     justify-content:flex-start; width:100%; padding:11px 14px;
     border-bottom:none; border-radius:10px;
@@ -573,12 +578,6 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 
   <!-- HEADER -->
   <header class="app-header">
-    <div class="header-top">
-      <button class="icon-toggle" id="langToggle">🌐 <span id="langToggleLabel">EN</span></button>
-      <button class="icon-toggle" id="themeToggle">🌗 <span id="themeToggleLabel" data-i18n="theme">Theme</span></button>
-      <button class="icon-toggle" id="headerLockBtn" title="Lock">🔒</button>
-      <button class="icon-toggle" id="headerLogoutBtn" title="Logout">🚪</button>
-    </div>
     <div class="app-title">📒 <span data-i18n="appTitle">Home Finance Ledger / வீட்டு நிதி கணக்கு</span></div>
     <div class="app-tagline" data-i18n="appTagline">Your family's money, in one simple book / உங்கள் குடும்ப பணம், ஒரே புத்தகத்தில்</div>
     <div class="thread-divider">
@@ -589,6 +588,12 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
   <!-- TABS -->
   <nav class="tabs" id="tabs">
     <button class="nav-pin-btn" id="navCollapseBtn" type="button" aria-label="Collapse menu" aria-controls="tabs" aria-expanded="true" title="Collapse menu"><span class="ic ic-desktop">«</span><span class="ic ic-mobile">✕</span></button>
+    <div class="nav-quick-row">
+      <button class="icon-toggle" id="langToggle">🌐 <span id="langToggleLabel">EN</span></button>
+      <button class="icon-toggle" id="themeToggle">🌗 <span id="themeToggleLabel" data-i18n="theme">Theme</span></button>
+      <button class="icon-toggle" id="headerLockBtn" title="Lock">🔒</button>
+      <button class="icon-toggle" id="headerLogoutBtn" title="Logout">🚪</button>
+    </div>
     <button class="tab-btn active" data-tab="dashboard"><span class="ic">🏠</span><span data-i18n="tabDashboard">Home</span></button>
     <button class="tab-btn" data-tab="income"><span class="ic">💰</span><span data-i18n="tabIncome">Income</span></button>
     <button class="tab-btn" data-tab="expense"><span class="ic">🧾</span><span data-i18n="tabExpense">Expense</span></button>
@@ -771,6 +776,20 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
         <p class="lang-note" id="accountEmailDisplay" style="margin-bottom:10px;"></p>
         <div class="settings-actions">
           <button class="btn ghost sm" onclick="logout()">வெளியேறு / Logout</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:15px; margin-bottom:10px;" data-i18n="changePassword">Change Password</h3>
+        <p class="lang-note" data-i18n="changePasswordNote" style="margin-bottom:10px;">Set a new password for your account right now — no email code needed since you're already signed in.</p>
+        <div class="form-grid">
+          <div class="field-row"><label class="field" data-i18n="currentPassword">Current Password</label><input type="password" id="change-pass-current" placeholder="••••••••" autocomplete="current-password"></div>
+          <div class="field-row"><label class="field" data-i18n="newPassword">New Password</label><input type="password" id="change-pass-new" placeholder="6+ chars" autocomplete="new-password"></div>
+          <div class="field-row"><label class="field" data-i18n="confirmNewPassword">Confirm New Password</label><input type="password" id="change-pass-confirm" placeholder="6+ chars" autocomplete="new-password"></div>
+        </div>
+        <div id="changePasswordError" style="color:var(--ledger-red); font-size:12.5px; margin:6px 0; display:none;"></div>
+        <div class="settings-actions">
+          <button class="btn sm" id="changePasswordBtn" data-i18n="updatePassword">Update Password</button>
         </div>
       </div>
 
@@ -977,6 +996,10 @@ const T = {
     expectedIncome:"Expected Income (₹)", expectedExpense:"Expected Expense (₹)", expectedSavings:"Expected Savings (₹)",
     month:"Month", actual:"Actual", expected:"Expected", statusSafe:"Safe", statusWarning:"Warning", statusOver:"Over Budget",
     languageTheme:"Language & Appearance", englishBtn:"English", tamilBtn:"தமிழ்", lightMode:"☀️ Light", darkMode:"🌙 Dark",
+    changePassword:"Change Password", changePasswordNote:"Set a new password for your account right now — no email code needed since you're already signed in.",
+    currentPassword:"Current Password", newPassword:"New Password", confirmNewPassword:"Confirm New Password", updatePassword:"Update Password",
+    passwordUpdated:"Password updated.", passwordMismatch:"New passwords don't match.", passwordTooShort:"New password must be at least 6 characters.",
+    currentPasswordWrong:"Current password is incorrect.", passwordUpdateError:"Could not update password. Please try again.",
     security:"Security", securityNote:"A PIN lock saved to your account. You'll be asked for it every time you open the app on this or any other device.",
     setPasscode:"Set Passcode", enableLock:"Enable Lock", disableLock:"Disable Lock", lockNow:"Lock Now",
     billReminders:"Bill Reminders", billRemindersNote:"Choose which expense categories should remind you each month if unpaid.",
