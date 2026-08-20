@@ -242,23 +242,30 @@ main{ padding:20px 16px 0; }
   .tabs{
     grid-area:tabs;
     flex-direction:column; align-items:stretch;
-    gap:2px; padding:16px 10px; overflow-x:visible;
-    border-bottom:none; border-right:1.5px solid var(--line);
+    gap:2px; padding:18px 12px; overflow-x:visible;
+    border-bottom:none; border-right:none;
+    background:var(--paper-deep); box-shadow:2px 0 14px rgba(43,33,23,0.08);
     position:sticky; top:0; align-self:start;
     height:100vh; overflow-y:auto;
     transition:opacity .2s ease, padding .2s ease;
   }
+  [data-theme="dark"] .tabs{ box-shadow:2px 0 14px rgba(0,0,0,0.35); }
   .nav-pin-btn{ justify-content:flex-start; margin-bottom:6px; }
-  .nav-quick-row{ display:grid; grid-template-columns:1fr 1fr; }
-  .nav-quick-row .icon-toggle{ justify-content:center; }
+  .nav-quick-row{ display:grid; grid-template-columns:1fr 1fr; border-bottom-color:var(--line); }
+  .nav-quick-row .icon-toggle{ justify-content:center; background:var(--card); }
   .tab-btn{
-    justify-content:flex-start; width:100%; padding:11px 14px;
+    justify-content:flex-start; width:100%; padding:10px 14px;
     border-bottom:none; border-radius:10px;
     border-left:3px solid transparent;
+    align-items:flex-start; line-height:1.35;
   }
-  .tab-btn:hover{ background:var(--paper-deep); }
-  .tab-btn.active{ background:var(--turmeric-bg); border-left-color:var(--turmeric); }
-  [data-theme="dark"] .tab-btn.active{ background:var(--turmeric-bg); }
+  .tab-btn .ic{ padding-top:1px; }
+  .tab-btn .lbl-sub{ display:block; font-size:.82em; margin-top:1px; }
+  .tab-btn:hover{ background:var(--card); }
+  .tab-btn.active{ background:var(--indigo); color:#F3EEDF; border-left-color:var(--turmeric); box-shadow:var(--shadow); }
+  .tab-btn.active .lbl-sub{ color:#D9CDA8; }
+  [data-theme="dark"] .tab-btn.active{ background:var(--indigo-deep); color:#14100B; }
+  [data-theme="dark"] .tab-btn.active .lbl-sub{ color:#2B2117; }
   .tab-btn.active::after{ display:none; }
 
   main{ grid-area:main; padding:20px 24px 0; transition:padding .2s ease; }
