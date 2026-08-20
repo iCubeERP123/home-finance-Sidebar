@@ -1212,12 +1212,18 @@ function buildFilterChips(containerId, moduleKey, onchange){
 
 /* ---------------------------- Database load / save / delete ---------------------------- */
 async function loadAllData(){
+  // Defense in depth: Row-Level Security on the database is what actually
+  // protects one user's data from another, but we also filter by
+  // user_id here on the client so that if RLS is ever misconfigured or
+  // temporarily disabled, a logged-in user still never *renders* another
+  // account's rows on screen.
+  const uid = currentUser?.id;
   const [inc, exp, sav, loans, budgets] = await Promise.all([
-    supabase.from('income').select('*').order('date', { ascending:false }).order('created_at', { ascending:false }),
-    supabase.from('expense').select('*').order('date', { ascending:false }).order('created_at', { ascending:false }),
-    supabase.from('savings').select('*').order('date', { ascending:false }).order('created_at', { ascending:false }),
-    supabase.from('loans').select('*').order('created_at', { ascending:false }),
-    supabase.from('budgets').select('*').order('month', { ascending:false }),
+    supabase.from('income').select('*').eq('user_id', uid).order('date', { ascending:false }).order('created_at', { ascending:false }),
+    supabase.from('expense').select('*').eq('user_id', uid).order('date', { ascending:false }).order('created_at', { ascending:false }),
+    supabase.from('savings').select('*').eq('user_id', uid).order('date', { ascending:false }).order('created_at', { ascending:false }),
+    supabase.from('loans').select('*').eq('user_id', uid).order('created_at', { ascending:false }),
+    supabase.from('budgets').select('*').eq('user_id', uid).order('month', { ascending:false }),
   ]);
   [inc, exp, sav, loans, budgets].forEach(r=>{ if(r.error) throw r.error; });
   state.income  = inc.data.map(r=>fromDbRow('income', r));
@@ -1236,16 +1242,16 @@ async function dbInsert(tableKey, payload){
 }
 async function dbUpdate(tableKey, id, payload){
   const row = toDbRow(tableKey, payload);
-  const { data, error } = await supabase.from(tableKey).update(row).eq('id', id).select().single();
+  const { data, error } = await supabase.from(tableKey).update(row).eq('id', id).eq('user_id', currentUser?.id).select().single();
   if(error) throw error;
   return fromDbRow(tableKey, data);
 }
 async function dbDelete(tableKey, id){
-  const { error } = await supabase.from(tableKey).delete().eq('id', id);
+  const { error } = await supabase.from(tableKey).delete().eq('id', id).eq('user_id', currentUser?.id);
   if(error) throw error;
 }
 async function dbDeleteAll(tableKey){
-  const { error } = await supabase.from(tableKey).delete().not('id','is', null);
+  const { error } = await supabase.from(tableKey).delete().eq('user_id', currentUser?.id);
   if(error) throw error;
 }
 
