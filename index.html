@@ -310,7 +310,8 @@ main{ padding:20px 16px 0; }
 .grid{ display:grid; gap:12px; }
 .grid.cols-3{ grid-template-columns:repeat(3,1fr); }
 .grid.cols-2{ grid-template-columns:repeat(2,1fr); }
-@media (max-width:640px){ .grid.cols-3{ grid-template-columns:repeat(2,1fr); } }
+.grid.cols-4{ grid-template-columns:repeat(4,1fr); }
+@media (max-width:640px){ .grid.cols-3{ grid-template-columns:repeat(2,1fr); } .grid.cols-4{ grid-template-columns:repeat(2,1fr); } }
 
 .stat-card{ text-align:center; padding:16px 8px; }
 .stat-card .ic{ font-size:20px; }
@@ -754,7 +755,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
         <div class="search-wrap"><span class="ic">🔍</span><input type="text" class="search-input" id="reports-search" placeholder="Search / தேடு" oninput="renderReports()"></div>
       </div>
       <div class="card plain" style="padding:14px 16px;">
-        <div class="grid cols-3" id="reports-summary"></div>
+        <div class="grid cols-4" id="reports-summary"></div>
       </div>
       <div class="settings-actions" style="margin-bottom:14px;">
         <button class="btn ghost sm" onclick="exportCSV()">⬇️ CSV</button>
@@ -981,8 +982,9 @@ const T = {
     tabDashboard:"Home", tabIncome:"Income", tabExpense:"Expense", tabSavings:"Savings",
     tabLoans:"Loans", tabPlanner:"Loan Planner", tabBudget:"Budget", tabReports:"Reports", tabSettings:"Settings",
     theme:"Theme", dashTitle:"Overview",
-    statIncome:"Total Income (All Time)", statExpense:"Total Expense (All Time)", statSavings:"Total Savings (All Time)",
+    statIncome:"Total Income", statExpense:"Total Expense", statSavings:"Total Savings",
     statLoan:"Total Loan Balance", statBalance:"Balance (All Time)", statSavingsPct:"Savings Percentage",
+    allTimeSuffix:"All Time", reportBalance:"Balance",
     chartIncomeExpense:"Income vs Expense", chartMonthlyExpense:"Monthly Expenses",
     chartSavingsGrowth:"Savings Growth", chartLoanBalance:"Loan Balance",
     addIncome:"Add Income", addExpense:"Add Expense", addSavings:"Add Savings", addLoan:"Add Loan",
@@ -1036,8 +1038,9 @@ const T = {
     tabDashboard:"முகப்பு", tabIncome:"வருமானம்", tabExpense:"செலவு", tabSavings:"சேமிப்பு",
     tabLoans:"கடன்", tabPlanner:"கடன் திட்டம்", tabBudget:"பட்ஜெட்", tabReports:"அறிக்கைகள்", tabSettings:"அமைப்புகள்",
     theme:"தீம்", dashTitle:"சுருக்கம்",
-    statIncome:"மொத்த வருமானம் (எல்லா காலமும்)", statExpense:"மொத்த செலவு (எல்லா காலமும்)", statSavings:"மொத்த சேமிப்பு (எல்லா காலமும்)",
+    statIncome:"மொத்த வருமானம்", statExpense:"மொத்த செலவு", statSavings:"மொத்த சேமிப்பு",
     statLoan:"மொத்த கடன் இருப்பு", statBalance:"மீதி (எல்லா காலமும்)", statSavingsPct:"சேமிப்பு சதவீதம்",
+    allTimeSuffix:"எல்லா காலமும்", reportBalance:"மீதி",
     chartIncomeExpense:"வருமானம் Vs செலவு", chartMonthlyExpense:"மாதாந்திர செலவுகள்",
     chartSavingsGrowth:"சேமிப்பு வளர்ச்சி", chartLoanBalance:"கடன் இருப்பு",
     addIncome:"வருமானம் சேர்", addExpense:"செலவு சேர்", addSavings:"சேமிப்பு சேர்", addLoan:"கடன் சேர்",
@@ -1141,6 +1144,37 @@ function t(key){
   const ta = (T.ta && T.ta[key]!==undefined) ? T.ta[key] : key;
   const en = (T.en && T.en[key]!==undefined) ? T.en[key] : key;
   if(ta===en) return ta;
+  return lang==='ta' ? `${ta} <span class="lbl-sub">(${en})</span>` : `${en} <span class="lbl-sub">(${ta})</span>`;
+}
+// Bilingual label for the three dashboard "all time" cards, built as one
+// clean string (e.g. "மொத்த வருமானம் (எல்லா காலமும்) (Total Income (All Time))")
+// rather than concatenating two separately-bilingual t() outputs.
+function tAllTime(key){
+  const ta = `${T.ta[key]} (${T.ta.allTimeSuffix})`;
+  const en = `${T.en[key]} (${T.en.allTimeSuffix})`;
+  return lang==='ta' ? `${ta} <span class="lbl-sub">(${en})</span>` : `${en} <span class="lbl-sub">(${ta})</span>`;
+}
+// Reports summary labels change with the selected time filter (Today/This
+// Week/This Month/This Year/All) so they never claim to be a "Total" when
+// actually scoped to a shorter period.
+const REPORT_PERIOD_PREFIX = {
+  all:   { ta:'மொத்த',        en:'Total' },
+  today: { ta:'இன்றைய',       en:"Today's" },
+  week:  { ta:'இந்த வார',     en:"This Week's" },
+  month: { ta:'இந்த மாத',     en:"This Month's" },
+  year:  { ta:'இந்த ஆண்டு',   en:"This Year's" },
+};
+const REPORT_STAT_NOUN = {
+  income:  { ta:'வருமானம்', en:'Income' },
+  expense: { ta:'செலவு',    en:'Expense' },
+  savings: { ta:'சேமிப்பு', en:'Savings' },
+  balance: { ta:'மீதி',      en:'Balance' },
+};
+function reportStatLabel(kind){
+  const p = REPORT_PERIOD_PREFIX[activeFilters.reports] || REPORT_PERIOD_PREFIX.all;
+  const n = REPORT_STAT_NOUN[kind];
+  const ta = `${p.ta} ${n.ta}`;
+  const en = `${p.en} ${n.en}`;
   return lang==='ta' ? `${ta} <span class="lbl-sub">(${en})</span>` : `${en} <span class="lbl-sub">(${ta})</span>`;
 }
 function tText(key){
@@ -1614,9 +1648,9 @@ function renderDashboard(){
 
   document.getElementById('dashDateLabel').textContent = new Date().toLocaleDateString(lang==='ta'?'ta-IN':'en-IN', {month:'long', year:'numeric'});
   document.getElementById('dashStats').innerHTML = `
-    <div class="stat-card"><div class="ic">💰</div><div class="num good">${fmtINR(totalIncome)}</div><div class="lbl">${t('statIncome')}</div></div>
-    <div class="stat-card"><div class="ic">🧾</div><div class="num bad">${fmtINR(totalExpense)}</div><div class="lbl">${t('statExpense')}</div></div>
-    <div class="stat-card"><div class="ic">🐖</div><div class="num">${fmtINR(totalSavings)}</div><div class="lbl">${t('statSavings')}</div></div>
+    <div class="stat-card"><div class="ic">💰</div><div class="num good">${fmtINR(totalIncome)}</div><div class="lbl">${tAllTime('statIncome')}</div></div>
+    <div class="stat-card"><div class="ic">🧾</div><div class="num bad">${fmtINR(totalExpense)}</div><div class="lbl">${tAllTime('statExpense')}</div></div>
+    <div class="stat-card"><div class="ic">🐖</div><div class="num">${fmtINR(totalSavings)}</div><div class="lbl">${tAllTime('statSavings')}</div></div>
     <div class="stat-card"><div class="ic">🏦</div><div class="num bad">${fmtINR(totalLoan)}</div><div class="lbl">${t('statLoan')}</div></div>
     <div class="stat-card"><div class="ic">📆</div><div class="num ${overallBalance>=0?'good':'bad'}">${fmtINR(overallBalance)}</div><div class="lbl">${t('statBalance')}</div></div>
     <div class="stat-card"><div class="ic">%</div><div class="num">${savingsPct.toFixed(1)}%</div><div class="lbl">${t('statSavingsPct')}</div></div>
@@ -1978,10 +2012,12 @@ function renderReports(){
   const inc = sumBy(items.filter(e=>e.kind==='income'));
   const exp = sumBy(items.filter(e=>e.kind==='expense'));
   const sav = sumBy(items.filter(e=>e.kind==='savings'));
+  const bal = inc - exp - sav;
   document.getElementById('reports-summary').innerHTML = `
-    <div class="stat-card"><div class="ic">💰</div><div class="num good">${fmtINR(inc)}</div><div class="lbl">${t('statIncome')}</div></div>
-    <div class="stat-card"><div class="ic">🧾</div><div class="num bad">${fmtINR(exp)}</div><div class="lbl">${t('statExpense')}</div></div>
-    <div class="stat-card"><div class="ic">🐖</div><div class="num">${fmtINR(sav)}</div><div class="lbl">${t('statSavings')}</div></div>
+    <div class="stat-card"><div class="ic">💰</div><div class="num good">${fmtINR(inc)}</div><div class="lbl">${reportStatLabel('income')}</div></div>
+    <div class="stat-card"><div class="ic">🧾</div><div class="num bad">${fmtINR(exp)}</div><div class="lbl">${reportStatLabel('expense')}</div></div>
+    <div class="stat-card"><div class="ic">🐖</div><div class="num">${fmtINR(sav)}</div><div class="lbl">${reportStatLabel('savings')}</div></div>
+    <div class="stat-card"><div class="ic">📆</div><div class="num ${bal>=0?'good':'bad'}">${fmtINR(bal)}</div><div class="lbl">${reportStatLabel('balance')}</div></div>
   `;
   buildFilterChips('reports-filters', 'reports', renderReports);
   window._lastReportItems = items;
