@@ -27,13 +27,32 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  // Only intercept simple GET navigations/asset requests. POST/PUT/etc.
+  // (auth calls, form submits) must always go straight to the network.
+  if (event.request.method !== "GET") return;
+
   const url = new URL(event.request.url);
 
   // Never cache Supabase API calls — always hit the network so data is live.
   if (url.hostname.endsWith(".supabase.co")) return;
 
-  // App shell: cache-first, falling back to network.
+  // Only manage same-origin requests ourselves; let the browser handle
+  // cross-origin requests (fonts, CDNs, etc.) normally.
+  if (url.origin !== self.location.origin) return;
+
+  // App shell: cache-first, falling back to network, with a safe fallback
+  // if the network is unavailable so a failed fetch never rejects unhandled.
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).catch(() => {
+        // Offline and not cached — fall back to the cached shell page for
+        // navigations; for other assets there's nothing sensible to return.
+        if (event.request.mode === "navigate") {
+          return caches.match("./index.html");
+        }
+        return new Response("", { status: 504, statusText: "Offline" });
+      });
+    })
   );
 });
