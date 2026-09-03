@@ -618,7 +618,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
     <!-- ================= DASHBOARD ================= -->
     <section class="tab-panel active" id="panel-dashboard">
       <div class="section-head">
-        <h2 data-i18n="dashTitle">This Month at a Glance</h2>
+        <h2 data-i18n="dashTitle">Overview</h2>
         <span class="sub" id="dashDateLabel"></span>
       </div>
       <div id="notifArea"></div>
@@ -980,9 +980,9 @@ const T = {
     appTitle: "Home Finance",appTagline: "Money, simplified",
     tabDashboard:"Home", tabIncome:"Income", tabExpense:"Expense", tabSavings:"Savings",
     tabLoans:"Loans", tabPlanner:"Loan Planner", tabBudget:"Budget", tabReports:"Reports", tabSettings:"Settings",
-    theme:"Theme", dashTitle:"This Month at a Glance",
-    statIncome:"Total Income", statExpense:"Total Expense", statSavings:"Total Savings",
-    statLoan:"Total Loan Balance", statBalance:"This Month Balance", statSavingsPct:"Savings Percentage",
+    theme:"Theme", dashTitle:"Overview",
+    statIncome:"Total Income (All Time)", statExpense:"Total Expense (All Time)", statSavings:"Total Savings (All Time)",
+    statLoan:"Total Loan Balance", statBalance:"Balance (All Time)", statSavingsPct:"Savings Percentage",
     chartIncomeExpense:"Income vs Expense", chartMonthlyExpense:"Monthly Expenses",
     chartSavingsGrowth:"Savings Growth", chartLoanBalance:"Loan Balance",
     addIncome:"Add Income", addExpense:"Add Expense", addSavings:"Add Savings", addLoan:"Add Loan",
@@ -1035,9 +1035,9 @@ const T = {
     appTitle: "வீட்டு நிதி",appTagline: "பணம், எளிமையாக",
     tabDashboard:"முகப்பு", tabIncome:"வருமானம்", tabExpense:"செலவு", tabSavings:"சேமிப்பு",
     tabLoans:"கடன்", tabPlanner:"கடன் திட்டம்", tabBudget:"பட்ஜெட்", tabReports:"அறிக்கைகள்", tabSettings:"அமைப்புகள்",
-    theme:"தீம்", dashTitle:"இந்த மாத சுருக்கம்",
-    statIncome:"மொத்த வருமானம்", statExpense:"மொத்த செலவு", statSavings:"மொத்த சேமிப்பு",
-    statLoan:"மொத்த கடன் இருப்பு", statBalance:"இந்த மாத மீதி", statSavingsPct:"சேமிப்பு சதவீதம்",
+    theme:"தீம்", dashTitle:"சுருக்கம்",
+    statIncome:"மொத்த வருமானம் (எல்லா காலமும்)", statExpense:"மொத்த செலவு (எல்லா காலமும்)", statSavings:"மொத்த சேமிப்பு (எல்லா காலமும்)",
+    statLoan:"மொத்த கடன் இருப்பு", statBalance:"மீதி (எல்லா காலமும்)", statSavingsPct:"சேமிப்பு சதவீதம்",
     chartIncomeExpense:"வருமானம் Vs செலவு", chartMonthlyExpense:"மாதாந்திர செலவுகள்",
     chartSavingsGrowth:"சேமிப்பு வளர்ச்சி", chartLoanBalance:"கடன் இருப்பு",
     addIncome:"வருமானம் சேர்", addExpense:"செலவு சேர்", addSavings:"சேமிப்பு சேர்", addLoan:"கடன் சேர்",
@@ -1607,13 +1607,9 @@ function renderDashboard(){
   const totalExpense = sumBy(state.expense);
   const totalSavings = sumBy(state.savings);
   const totalLoan = state.loans.reduce((s,l)=>s+(Number(l.remaining)||0),0);
-  const monthIncome = sumBy(state.income, e=>isThisMonth(e.date));
-  const monthExpense = sumBy(state.expense, e=>isThisMonth(e.date));
-  // Money moved into savings this month is no longer "in hand", so it comes
-  // out of the month balance too (a savings withdrawal, entered as a
-  // negative savings amount, adds cash back in automatically).
-  const monthSavings = sumBy(state.savings, e=>isThisMonth(e.date));
-  const monthBalance = monthIncome - monthExpense - monthSavings;
+  // Balance combines all entries across every month (not just the current
+  // month), matching the other stat cards which are also all-time totals.
+  const overallBalance = totalIncome - totalExpense - totalSavings;
   const savingsPct = totalIncome>0 ? (totalSavings/totalIncome*100) : 0;
 
   document.getElementById('dashDateLabel').textContent = new Date().toLocaleDateString(lang==='ta'?'ta-IN':'en-IN', {month:'long', year:'numeric'});
@@ -1622,7 +1618,7 @@ function renderDashboard(){
     <div class="stat-card"><div class="ic">🧾</div><div class="num bad">${fmtINR(totalExpense)}</div><div class="lbl">${t('statExpense')}</div></div>
     <div class="stat-card"><div class="ic">🐖</div><div class="num">${fmtINR(totalSavings)}</div><div class="lbl">${t('statSavings')}</div></div>
     <div class="stat-card"><div class="ic">🏦</div><div class="num bad">${fmtINR(totalLoan)}</div><div class="lbl">${t('statLoan')}</div></div>
-    <div class="stat-card"><div class="ic">📆</div><div class="num ${monthBalance>=0?'good':'bad'}">${fmtINR(monthBalance)}</div><div class="lbl">${t('statBalance')}</div></div>
+    <div class="stat-card"><div class="ic">📆</div><div class="num ${overallBalance>=0?'good':'bad'}">${fmtINR(overallBalance)}</div><div class="lbl">${t('statBalance')}</div></div>
     <div class="stat-card"><div class="ic">%</div><div class="num">${savingsPct.toFixed(1)}%</div><div class="lbl">${t('statSavingsPct')}</div></div>
   `;
   renderNotifications();
