@@ -603,6 +603,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
       <button class="icon-toggle" id="headerLogoutBtn" title="Logout">🚪</button>
     </div>
     <button class="tab-btn active" data-tab="dashboard"><span class="ic">🏠</span><span data-i18n="tabDashboard">Home</span></button>
+    <button class="tab-btn" data-tab="tasks"><span class="ic">✅</span><span data-i18n="tabTasks">Tasks</span></button>
     <button class="tab-btn" data-tab="income"><span class="ic">💰</span><span data-i18n="tabIncome">Income</span></button>
     <button class="tab-btn" data-tab="expense"><span class="ic">🧾</span><span data-i18n="tabExpense">Expense</span></button>
     <button class="tab-btn" data-tab="savings"><span class="ic">🐖</span><span data-i18n="tabSavings">Savings</span></button>
@@ -623,6 +624,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
         <span class="sub" id="dashDateLabel"></span>
       </div>
       <div id="notifArea"></div>
+      <div id="dashTasksCard"></div>
       <div class="grid cols-3" id="dashStats"></div>
       <div class="grid cols-2" style="margin-top:14px;">
         <div class="card">
@@ -644,6 +646,15 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
           <div class="chart-wrap"><canvas id="chartLoanBalance"></canvas></div>
         </div>
       </div>
+    </section>
+
+    <!-- ================= TASKS ================= -->
+    <section class="tab-panel" id="panel-tasks">
+      <div class="section-head">
+        <h2 data-i18n="tabTasks">Tasks</h2>
+        <button class="btn" onclick="openTaskModal()">+ <span data-i18n="addTask">Add Task</span></button>
+      </div>
+      <div id="tasks-list"></div>
     </section>
 
     <!-- ================= INCOME ================= -->
@@ -882,6 +893,18 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
   </div>
 </div>
 
+<!-- TASK MODAL -->
+<div class="modal-backdrop" id="taskModalBackdrop">
+  <div class="modal">
+    <h3 data-i18n="addTask">Add Task</h3>
+    <div id="taskModalBody"></div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeTaskModal()" data-i18n="cancelBtn">Cancel</button>
+      <button class="btn" id="taskModalSave" onclick="saveTask()" data-i18n="save">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- CONFIRM MODAL -->
 <div class="modal-backdrop" id="confirmModalBackdrop">
   <div class="modal">
@@ -946,6 +969,7 @@ let currentUser = null; // the logged-in Supabase auth user; every table's
 const FIELD_MAP = {
   loans:   { interestPct:'interest_pct', startDate:'start_date', endDate:'end_date' },
   budgets: { expectedIncome:'expected_income', expectedExpense:'expected_expense', expectedSavings:'expected_savings' },
+  tasks:   { completedDates:'completed_dates' },
 };
 const NUMERIC_FIELDS = {
   income:   ['amount'],
@@ -953,6 +977,7 @@ const NUMERIC_FIELDS = {
   savings:  ['amount'],
   loans:    ['amount','interestPct','emi','remaining'],
   budgets:  ['expectedIncome','expectedExpense','expectedSavings'],
+  tasks:    ['weekday'],
 };
 function toDbRow(tableKey, rec){
   const map = FIELD_MAP[tableKey] || {};
@@ -979,7 +1004,7 @@ function fromDbRow(tableKey, row){
 const T = {
   en: {
     appTitle: "Home Finance",appTagline: "Money, simplified",
-    tabDashboard:"Home", tabIncome:"Income", tabExpense:"Expense", tabSavings:"Savings",
+    tabDashboard:"Home", tabIncome:"Income", tabExpense:"Expense", tabSavings:"Savings", tabTasks:"Tasks",
     tabLoans:"Loans", tabPlanner:"Loan Planner", tabBudget:"Budget", tabReports:"Reports", tabSettings:"Settings",
     theme:"Theme", dashTitle:"Overview",
     statIncome:"Total Income", statExpense:"Total Expense", statSavings:"Total Savings",
@@ -988,6 +1013,12 @@ const T = {
     chartIncomeExpense:"Income vs Expense", chartMonthlyExpense:"Monthly Expenses",
     chartSavingsGrowth:"Savings Growth", chartLoanBalance:"Loan Balance",
     addIncome:"Add Income", addExpense:"Add Expense", addSavings:"Add Savings", addLoan:"Add Loan",
+    addTask:"Add Task", editTask:"Edit Task", taskTitle:"Task", repeatType:"Repeats", repeatNone:"One-time", repeatDaily:"Daily", repeatWeekly:"Weekly",
+    todaysTasks:"Today's Tasks", tasksPendingToday:"pending today", allTasksDoneToday:"All tasks done for today! 🎉", viewAllTasks:"View all",
+    dueDate:"Due Date (optional)", dueLabel:"Due", overdueLabel:"Overdue",
+    everyDay:"Every day", everyWeekOn:"Every week on", dayOfWeek:"Day of the week",
+    weekdaySun:"Sunday", weekdayMon:"Monday", weekdayTue:"Tuesday", weekdayWed:"Wednesday", weekdayThu:"Thursday", weekdayFri:"Friday", weekdaySat:"Saturday",
+    tasksNoEntries:"No tasks yet", tasksNoEntriesSub:"Tap the button above to add your first task.",
     date:"Date", category:"Category", amount:"Amount (₹)", notes:"Notes (optional)",
     save:"Save", cancelBtn:"Cancel", edit:"", delete:"",
     noEntries:"No entries yet", noEntriesSub:"Tap the button above to add your first one.",
@@ -1029,13 +1060,13 @@ const T = {
     reportsSearch:"Search reports", noResults:"No matching entries", searchPH:"Search by category, notes or amount",
     fillRequired:"Please fill all required fields with valid values.",
     loadError:"Could not load data from the database. Check your connection and reload.",
-    saveError:"Could not save. Please try again.", deleteError:"Could not delete. Please try again.",
+    saveError:"Could not save. Please try again.", deleteError:"Could not delete. Please try again.", titleRequired:"Please enter a task title.",
     otpSent:"OTP code sent to your email.", passwordReset:"Password reset. You're logged in.",
     loadingLedger:"Loading your ledger…",
   },
   ta: {
     appTitle: "வீட்டு நிதி",appTagline: "பணம், எளிமையாக",
-    tabDashboard:"முகப்பு", tabIncome:"வருமானம்", tabExpense:"செலவு", tabSavings:"சேமிப்பு",
+    tabDashboard:"முகப்பு", tabIncome:"வருமானம்", tabExpense:"செலவு", tabSavings:"சேமிப்பு", tabTasks:"பணிகள்",
     tabLoans:"கடன்", tabPlanner:"கடன் திட்டம்", tabBudget:"பட்ஜெட்", tabReports:"அறிக்கைகள்", tabSettings:"அமைப்புகள்",
     theme:"தீம்", dashTitle:"சுருக்கம்",
     statIncome:"மொத்த வருமானம்", statExpense:"மொத்த செலவு", statSavings:"மொத்த சேமிப்பு",
@@ -1044,6 +1075,12 @@ const T = {
     chartIncomeExpense:"வருமானம் Vs செலவு", chartMonthlyExpense:"மாதாந்திர செலவுகள்",
     chartSavingsGrowth:"சேமிப்பு வளர்ச்சி", chartLoanBalance:"கடன் இருப்பு",
     addIncome:"வருமானம் சேர்", addExpense:"செலவு சேர்", addSavings:"சேமிப்பு சேர்", addLoan:"கடன் சேர்",
+    addTask:"பணி சேர்", editTask:"பணி திருத்து", taskTitle:"பணி", repeatType:"திரும்ப நிகழ்வு", repeatNone:"ஒருமுறை", repeatDaily:"தினமும்", repeatWeekly:"வாரந்தோறும்",
+    todaysTasks:"இன்றைய பணிகள்", tasksPendingToday:"இன்னும் முடிக்கவில்லை", allTasksDoneToday:"இன்றைய பணிகள் அனைத்தும் முடிந்தது! 🎉", viewAllTasks:"அனைத்தையும் பார்",
+    dueDate:"குறிப்பிட்ட தேதி (விருப்பம்)", dueLabel:"தேதி", overdueLabel:"தேதி தாண்டியது",
+    everyDay:"தினமும்", everyWeekOn:"ஒவ்வொரு வாரமும்", dayOfWeek:"வாரத்தின் நாள்",
+    weekdaySun:"ஞாயிறு", weekdayMon:"திங்கள்", weekdayTue:"செவ்வாய்", weekdayWed:"புதன்", weekdayThu:"வியாழன்", weekdayFri:"வெள்ளி", weekdaySat:"சனி",
+    tasksNoEntries:"இன்னும் பணிகள் இல்லை", tasksNoEntriesSub:"முதல் பணியை சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்.",
     date:"தேதி", category:"வகை", amount:"தொகை (₹)", notes:"குறிப்பு (விருப்பம்)",
     save:"சேமி", cancelBtn:"ரத்து செய்", edit:"", delete:"",
     noEntries:"இன்னும் பதிவுகள் இல்லை", noEntriesSub:"முதல் பதிவைச் சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்.",
@@ -1081,7 +1118,7 @@ const T = {
     reportsSearch:"அறிக்கைகளில் தேடு", noResults:"பொருந்தும் பதிவுகள் இல்லை", searchPH:"வகை, குறிப்பு அல்லது தொகை மூலம் தேடு",
     fillRequired:"தேவையான அனைத்து புலங்களையும் சரியாக நிரப்பவும்.",
     loadError:"தரவுத்தளத்திலிருந்து தரவை ஏற்ற முடியவில்லை. இணைப்பை சரிபார்த்து மீண்டும் ஏற்றவும்.",
-    saveError:"சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.", deleteError:"நீக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.",
+    saveError:"சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.", deleteError:"நீக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.", titleRequired:"தயவுசெய்து பணியின் பெயரை உள்ளிடவும்.",
     otpSent:"OTP குறியீடு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டது.", passwordReset:"கடவுச்சொல் மீட்டமைக்கப்பட்டது. நீங்கள் உள்நுழைந்துவிட்டீர்கள்.",
     loadingLedger:"உங்கள் கணக்கு ஏற்றப்படுகிறது…",
   }
@@ -1136,7 +1173,7 @@ let reminderCats = [...DEFAULT_RECURRING_BILL_CATS];
 let savingsReminderCats = [...DEFAULT_SAVINGS_REMINDER_CATS];
 
 const state = {
-  income: [], expense: [], savings: [], loans: [], budgets: [],
+  income: [], expense: [], savings: [], loans: [], budgets: [], tasks: [],
 };
 
 /* ---------------------------- Helpers ---------------------------- */
@@ -1282,19 +1319,21 @@ async function loadAllData(){
   // temporarily disabled, a logged-in user still never *renders* another
   // account's rows on screen.
   const uid = currentUser?.id;
-  const [inc, exp, sav, loans, budgets] = await Promise.all([
+  const [inc, exp, sav, loans, budgets, tasks] = await Promise.all([
     supabase.from('income').select('*').eq('user_id', uid).order('date', { ascending:false }).order('created_at', { ascending:false }),
     supabase.from('expense').select('*').eq('user_id', uid).order('date', { ascending:false }).order('created_at', { ascending:false }),
     supabase.from('savings').select('*').eq('user_id', uid).order('date', { ascending:false }).order('created_at', { ascending:false }),
     supabase.from('loans').select('*').eq('user_id', uid).order('created_at', { ascending:false }),
     supabase.from('budgets').select('*').eq('user_id', uid).order('month', { ascending:false }),
+    supabase.from('tasks').select('*').eq('user_id', uid).order('created_at', { ascending:false }),
   ]);
-  [inc, exp, sav, loans, budgets].forEach(r=>{ if(r.error) throw r.error; });
+  [inc, exp, sav, loans, budgets, tasks].forEach(r=>{ if(r.error) throw r.error; });
   state.income  = inc.data.map(r=>fromDbRow('income', r));
   state.expense = exp.data.map(r=>fromDbRow('expense', r));
   state.savings = sav.data.map(r=>fromDbRow('savings', r));
   state.loans   = loans.data.map(r=>fromDbRow('loans', r));
   state.budgets = budgets.data.map(r=>fromDbRow('budgets', r));
+  state.tasks   = tasks.data.map(r=>fromDbRow('tasks', r));
 }
 
 async function dbInsert(tableKey, payload){
@@ -1647,6 +1686,7 @@ function renderDashboard(){
   const savingsPct = totalIncome>0 ? (totalSavings/totalIncome*100) : 0;
 
   document.getElementById('dashDateLabel').textContent = new Date().toLocaleDateString(lang==='ta'?'ta-IN':'en-IN', {month:'long', year:'numeric'});
+  renderDashboardTasksCard();
   document.getElementById('dashStats').innerHTML = `
     <div class="stat-card"><div class="ic">💰</div><div class="num good">${fmtINR(totalIncome)}</div><div class="lbl">${tAllTime('statIncome')}</div></div>
     <div class="stat-card"><div class="ic">🧾</div><div class="num bad">${fmtINR(totalExpense)}</div><div class="lbl">${tAllTime('statExpense')}</div></div>
@@ -1657,6 +1697,32 @@ function renderDashboard(){
   `;
   renderNotifications();
   renderDashboardCharts();
+}
+// Small "Today's Tasks" summary on the dashboard — pending count + up to 3
+// titles, with a shortcut into the Tasks tab. Reuses todaysRelevantTasks()/
+// isTaskDoneNow() defined in the Tasks module below (function declarations
+// are hoisted, so this earlier call is safe).
+function renderDashboardTasksCard(){
+  const el = document.getElementById('dashTasksCard');
+  if(!el) return;
+  const today = todaysRelevantTasks();
+  const pending = today.filter(t=>!isTaskDoneNow(t));
+  if(today.length===0){ el.innerHTML = ''; return; }
+  const body = pending.length===0
+    ? `<div style="color:var(--teal);font-weight:600;">${t('allTasksDoneToday')}</div>`
+    : `<div style="display:flex; flex-wrap:wrap; gap:6px 16px;">
+        ${pending.slice(0,3).map(tk=>`<span>☐ ${escapeHtml(tk.title)}</span>`).join('')}
+        ${pending.length>3 ? `<span class="lbl-sub">+${pending.length-3}</span>` : ''}
+      </div>`;
+  el.innerHTML = `
+    <div class="card plain" style="padding:14px 16px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+      <div>
+        <div style="font-weight:700; margin-bottom:4px;">✅ ${t('todaysTasks')} ${pending.length>0 ? `<span class="lbl-sub">(${pending.length} ${tText('tasksPendingToday')})</span>` : ''}</div>
+        ${body}
+      </div>
+      <button class="btn ghost sm" onclick="document.querySelector('.tab-btn[data-tab=tasks]').click()">${t('viewAllTasks')}</button>
+    </div>
+  `;
 }
 
 /* ---------------------------- Notifications ---------------------------- */
@@ -1970,6 +2036,182 @@ function askDeleteBudget(id){
       toast(tText('deleteError') + (err?.message ? ' (' + err.message + ')' : ''));
     }
   });
+}
+
+/* ---------------------------- Tasks (Daily/Weekly Planner) ----------------------------
+   A simple checklist. Each task optionally repeats daily or weekly; a single
+   `completedDates` array on the row remembers which occurrence(s) have been
+   ticked, so a daily task's checkbox clears itself the next day and a
+   weekly task's checkbox clears itself the following week, while a
+   one-time task just stays checked once it's done. */
+const WEEKDAY_KEYS = ['weekdaySun','weekdayMon','weekdayTue','weekdayWed','weekdayThu','weekdayFri','weekdaySat'];
+// The date (YYYY-MM-DD) that this week's occurrence of `weekday` falls on,
+// using the same Monday-start week as isThisWeek() so it lines up with the
+// rest of the app's "this week" logic.
+function currentWeekOccurrence(weekday){
+  const now = new Date();
+  const day = now.getDay() === 0 ? 7 : now.getDay();
+  const monday = new Date(now); monday.setDate(now.getDate() - day + 1); monday.setHours(0,0,0,0);
+  const offset = weekday === 0 ? 6 : weekday - 1; // Monday=0 ... Sunday=6
+  const d = new Date(monday); d.setDate(monday.getDate() + offset);
+  return d.toISOString().slice(0,10);
+}
+function taskPeriodKey(task){
+  if(task.repeat === 'daily') return todayISO();
+  if(task.repeat === 'weekly') return currentWeekOccurrence(Number(task.weekday));
+  return null; // one-off tasks don't use a period key
+}
+function isTaskDoneNow(task){
+  const dates = task.completedDates || [];
+  if(task.repeat === 'none') return dates.length > 0;
+  return dates.includes(taskPeriodKey(task));
+}
+async function toggleTaskDone(id){
+  const task = state.tasks.find(t=>t.id===id);
+  if(!task) return;
+  try{
+    const dates = task.completedDates || [];
+    let next;
+    if(task.repeat === 'none'){
+      next = dates.length > 0 ? [] : [todayISO()];
+    } else {
+      const key = taskPeriodKey(task);
+      next = dates.includes(key) ? dates.filter(d=>d!==key) : [...dates, key];
+    }
+    const updated = await dbUpdate('tasks', id, { completedDates: next });
+    Object.assign(task, updated);
+    renderTasks();
+  } catch(err){
+    console.error(err);
+    toast(tText('deleteError') + (err?.message ? ' (' + err.message + ')' : ''));
+  }
+}
+let editingTaskId = null;
+function openTaskModal(id){
+  editingTaskId = id || null;
+  const existing = id ? state.tasks.find(x=>x.id===id) : null;
+  document.querySelector('#taskModalBackdrop h3').textContent = tText(existing ? 'editTask' : 'addTask');
+  const body = document.getElementById('taskModalBody');
+  const repeat = existing?.repeat || 'none';
+  body.innerHTML = `
+    <div class="field-row"><label class="field">${t('taskTitle')}</label><input type="text" id="tk-title" placeholder="${tText('taskTitle')}" value="${existing ? escapeHtml(existing.title) : ''}"></div>
+    <div class="field-row"><label class="field">${t('repeatType')}</label>
+      <select id="tk-repeat" onchange="
+        document.getElementById('tk-weekday-row').style.display = this.value==='weekly' ? '' : 'none';
+        document.getElementById('tk-date-row').style.display = this.value==='none' ? '' : 'none';
+      ">
+        <option value="none" ${repeat==='none'?'selected':''}>${tText('repeatNone')}</option>
+        <option value="daily" ${repeat==='daily'?'selected':''}>${tText('repeatDaily')}</option>
+        <option value="weekly" ${repeat==='weekly'?'selected':''}>${tText('repeatWeekly')}</option>
+      </select>
+    </div>
+    <div class="field-row" id="tk-weekday-row" style="${repeat==='weekly'?'':'display:none;'}"><label class="field">${t('dayOfWeek')}</label>
+      <select id="tk-weekday">${WEEKDAY_KEYS.map((k,i)=>`<option value="${i}" ${existing && Number(existing.weekday)===i?'selected':''}>${tText(k)}</option>`).join('')}</select>
+    </div>
+    <div class="field-row" id="tk-date-row" style="${repeat==='none'?'':'display:none;'}"><label class="field">${t('dueDate')}</label>
+      <input type="date" id="tk-date" value="${existing?.date || ''}">
+    </div>
+  `;
+  document.getElementById('taskModalBackdrop').classList.add('show');
+}
+function closeTaskModal(){ document.getElementById('taskModalBackdrop').classList.remove('show'); editingTaskId = null; }
+async function saveTask(){
+  const title = document.getElementById('tk-title').value.trim();
+  if(!title){ toast(tText('titleRequired')); return; }
+  const repeat = document.getElementById('tk-repeat').value;
+  const weekday = repeat === 'weekly' ? Number(document.getElementById('tk-weekday').value) : null;
+  const date = repeat === 'none' ? (document.getElementById('tk-date').value || null) : null;
+  const saveBtn = document.getElementById('taskModalSave');
+  saveBtn.disabled = true;
+  try{
+    if(editingTaskId){
+      const task = state.tasks.find(x=>x.id===editingTaskId);
+      const repeatChanged = task.repeat !== repeat || Number(task.weekday||-1) !== Number(weekday==null?-1:weekday);
+      // Only wipe completion history if the repeat pattern itself changed —
+      // an old "done" tick from before a repeat-type change would otherwise
+      // wrongly look like today's/this week's occurrence is already ticked.
+      // A plain title edit (or just changing the due date) should leave the
+      // done/undone state untouched.
+      const payload = repeatChanged
+        ? { title, repeat, weekday, date, completedDates: [] }
+        : { title, repeat, weekday, date };
+      const updated = await dbUpdate('tasks', editingTaskId, payload);
+      Object.assign(task, updated);
+    } else {
+      const payload = { title, repeat, weekday, date, completedDates: [] };
+      state.tasks.unshift(await dbInsert('tasks', payload));
+    }
+    closeTaskModal(); toast(tText('savedMsg')); renderTasks(); renderDashboard();
+  } catch(err){
+    console.error(err);
+    toast(tText('saveError') + (err?.message ? ' (' + err.message + ')' : ''));
+  } finally {
+    saveBtn.disabled = false;
+  }
+}
+function askDeleteTask(id){
+  openConfirmModal(tText('confirmDeleteBody'), async ()=>{
+    try{
+      await dbDelete('tasks', id);
+      state.tasks = state.tasks.filter(t=>t.id!==id);
+      toast(tText('deletedMsg')); renderTasks(); renderDashboard();
+    } catch(err){
+      console.error(err);
+      toast(tText('deleteError') + (err?.message ? ' (' + err.message + ')' : ''));
+    }
+  });
+}
+function taskRepeatLabel(task){
+  if(task.repeat==='daily') return t('everyDay');
+  if(task.repeat==='weekly') return `${t('everyWeekOn')} ${t(WEEKDAY_KEYS[Number(task.weekday)])}`;
+  if(task.date){
+    const overdue = task.date < todayISO() && !isTaskDoneNow(task);
+    const label = `${t('dueLabel')}: ${task.date}`;
+    return overdue ? `<span style="color:var(--ledger-red);font-weight:600;">${label} · ${t('overdueLabel')}</span>` : label;
+  }
+  return t('repeatNone');
+}
+// Tasks relevant "today": daily tasks, weekly tasks whose day is today, and
+// one-time tasks that are undated or due today/earlier (a one-time task
+// dated in the future stays out of "today" until its date arrives, but
+// still shows up in the full Tasks list below). Used by both the Tasks tab
+// and the dashboard's "Today's Tasks" summary.
+function todaysRelevantTasks(){
+  const dow = new Date().getDay();
+  return state.tasks.filter(t=>
+    t.repeat==='daily' ||
+    (t.repeat==='weekly' && Number(t.weekday)===dow) ||
+    (t.repeat==='none' && (!t.date || t.date <= todayISO()))
+  );
+}
+function renderTasks(){
+  const listEl = document.getElementById('tasks-list');
+  if(!listEl) return;
+  if(state.tasks.length===0){
+    listEl.innerHTML = `<div class="empty-state"><span class="ic">✅</span><div class="en">${t('tasksNoEntries')}</div><div>${t('tasksNoEntriesSub')}</div></div>`;
+    return;
+  }
+  // Pending tasks first (earliest due date first among those), done tasks
+  // sink to the bottom; tasks with no due date sort after dated ones.
+  const sorted = [...state.tasks].sort((a,b)=>{
+    const doneDiff = (isTaskDoneNow(a)?1:0) - (isTaskDoneNow(b)?1:0);
+    if(doneDiff !== 0) return doneDiff;
+    return (a.date || '9999-99-99').localeCompare(b.date || '9999-99-99');
+  });
+  listEl.innerHTML = sorted.map(task=>{
+    const done = isTaskDoneNow(task);
+    return `<div class="item-row">
+      <input type="checkbox" ${done?'checked':''} onchange="toggleTaskDone('${task.id}')" style="width:20px;height:20px;flex:0 0 auto;cursor:pointer;">
+      <div class="info">
+        <div class="name" style="${done?'text-decoration:line-through;opacity:.6;':''}">${escapeHtml(task.title)}</div>
+        <div class="meta">${taskRepeatLabel(task)}</div>
+      </div>
+      <div class="row-actions">
+        <button class="icon-btn" onclick="openTaskModal('${task.id}')" title="${t('edit')}">✏️</button>
+        <button class="icon-btn danger" onclick="askDeleteTask('${task.id}')" title="${t('delete')}">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 /* ---------------------------- Reports ---------------------------- */
@@ -2338,6 +2580,7 @@ async function restoreBackup(event){
         ['savings', data.state.savings || []],
         ['loans', data.state.loans || []],
         ['budgets', data.state.budgets || []],
+        ['tasks', data.state.tasks || []],
       ];
       for(const [tableKey] of groups){ await dbDeleteAll(tableKey); }
       for(const [tableKey, rows] of groups){
@@ -2364,8 +2607,8 @@ async function restoreBackup(event){
 function confirmClearAll(){
   openConfirmModal(tText('confirmClearBody'), async ()=>{
     try{
-      await Promise.all(['income','expense','savings','loans','budgets'].map(dbDeleteAll));
-      state.income = []; state.expense = []; state.savings = []; state.loans = []; state.budgets = [];
+      await Promise.all(['income','expense','savings','loans','budgets','tasks'].map(dbDeleteAll));
+      state.income = []; state.expense = []; state.savings = []; state.loans = []; state.budgets = []; state.tasks = [];
       renderAll(); toast(tText('clearedMsg'));
     } catch(err){
       console.error(err);
@@ -2444,12 +2687,14 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     if(btn.dataset.tab==='reports') renderReports();
     if(btn.dataset.tab==='dashboard') renderDashboardCharts();
     if(btn.dataset.tab==='settings') renderBillReminderSettings();
+    if(btn.dataset.tab==='tasks') renderTasks();
     if(window.innerWidth < 880) setMenuCollapsed(true);
   });
 });
 
 function renderAll(){
   renderDashboard();
+  renderTasks();
   renderList('income');
   renderList('expense');
   renderList('savings');
@@ -2468,6 +2713,7 @@ Object.assign(window, {
   setLang, setTheme, enableLock, disableLock, lockNow, toggleReminderCat,
   downloadBackup, restoreBackup, confirmClearAll, renderList, renderReports,
   logout, handleCatSelectChange, closeCategoryModal, saveCategory,
+  openTaskModal, closeTaskModal, saveTask, askDeleteTask, toggleTaskDone,
 });
 
 // Keep the app in sync if the user logs out (or their session expires) in
