@@ -175,6 +175,7 @@ html.nav-collapsed .nav-fab{ display:flex; }
 
 main{ padding:20px 16px 0; }
 .nav-backdrop{ display:none; }
+.bottom-nav{ display:none; }
 
 /* ---- Menu drawer — narrow screens ----
    Same nav, same tab-btn items — on narrow screens it becomes a left-side
@@ -217,6 +218,31 @@ main{ padding:20px 16px 0; }
   html:not(.nav-collapsed) .nav-backdrop{ opacity:1; pointer-events:auto; }
 
   .nav-fab{ left:14px; bottom:18px; width:50px; height:50px; border-radius:999px; font-size:19px; }
+
+  /* Bottom nav takes over quick access + the drawer-opening job on mobile,
+     so the old floating hamburger (nav-fab) steps aside here. */
+  .nav-fab{ display:none !important; }
+
+  .bottom-nav{
+    display:flex; position:fixed; left:0; right:0; bottom:0; z-index:110;
+    background:var(--card); border-top:1px solid var(--line);
+    box-shadow:0 -2px 14px rgba(20,15,10,.12);
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
+  }
+  .bottom-nav-btn{
+    flex:1 1 0; display:flex; flex-direction:column; align-items:center; gap:2px;
+    background:none; border:none; padding:6px 2px; font-family:inherit;
+    font-size:11px; color:var(--ink-soft); cursor:pointer; border-radius:10px;
+  }
+  .bottom-nav-btn .ic{ font-size:20px; line-height:1; }
+  .bottom-nav-btn.active{ color:var(--indigo-deep); font-weight:700; }
+  [data-theme="dark"] .bottom-nav-btn.active{ color:var(--turmeric); }
+  /* Leave room at the bottom of the page so the fixed bar never covers
+     the last item in a list or the last stat card. */
+  main{ padding-bottom:74px; }
+}
+@media (min-width:880px){
+  .bottom-nav{ display:none; }
 }
 
 /* ---- Side menu layout (wider screens) ----
@@ -311,7 +337,7 @@ main{ padding:20px 16px 0; }
 .grid.cols-3{ grid-template-columns:repeat(3,1fr); }
 .grid.cols-2{ grid-template-columns:repeat(2,1fr); }
 .grid.cols-4{ grid-template-columns:repeat(4,1fr); }
-@media (max-width:640px){ .grid.cols-3{ grid-template-columns:repeat(2,1fr); } .grid.cols-4{ grid-template-columns:repeat(2,1fr); } }
+@media (max-width:640px){ .grid.cols-3{ grid-template-columns:repeat(2,1fr); } .grid.cols-4{ grid-template-columns:repeat(2,1fr); } .grid.cols-2{ grid-template-columns:1fr; } }
 
 .stat-card{ text-align:center; padding:16px 8px; }
 .stat-card .ic{ font-size:20px; }
@@ -615,6 +641,13 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
   </nav>
   <div class="nav-backdrop" id="navBackdrop"></div>
   <button class="nav-fab" id="navFab" type="button" aria-label="Open menu" aria-controls="tabs" aria-expanded="false" title="Open menu"><span class="ic">☰</span></button>
+
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="bottom-nav-btn active" data-tab="dashboard"><span class="ic">🏠</span><span data-i18n="tabDashboard">Home</span></button>
+    <button class="bottom-nav-btn" data-tab="tasks"><span class="ic">✅</span><span data-i18n="tabTasks">Tasks</span></button>
+    <button class="bottom-nav-btn" data-tab="reports"><span class="ic">📊</span><span data-i18n="tabReports">Reports</span></button>
+    <button class="bottom-nav-btn" id="bottomNavMore" type="button"><span class="ic">⋯</span><span data-i18n="moreMenu">More</span></button>
+  </nav>
 
   <main>
     <!-- ================= DASHBOARD ================= -->
@@ -1004,7 +1037,7 @@ function fromDbRow(tableKey, row){
 const T = {
   en: {
     appTitle: "Home Finance",appTagline: "Money, simplified",
-    tabDashboard:"Home", tabIncome:"Income", tabExpense:"Expense", tabSavings:"Savings", tabTasks:"Tasks",
+    tabDashboard:"Home", tabIncome:"Income", tabExpense:"Expense", tabSavings:"Savings", tabTasks:"Tasks", moreMenu:"More",
     tabLoans:"Loans", tabPlanner:"Loan Planner", tabBudget:"Budget", tabReports:"Reports", tabSettings:"Settings",
     theme:"Theme", dashTitle:"Overview",
     statIncome:"Total Income", statExpense:"Total Expense", statSavings:"Total Savings",
@@ -1066,7 +1099,7 @@ const T = {
   },
   ta: {
     appTitle: "வீட்டு நிதி",appTagline: "பணம், எளிமையாக",
-    tabDashboard:"முகப்பு", tabIncome:"வருமானம்", tabExpense:"செலவு", tabSavings:"சேமிப்பு", tabTasks:"பணிகள்",
+    tabDashboard:"முகப்பு", tabIncome:"வருமானம்", tabExpense:"செலவு", tabSavings:"சேமிப்பு", tabTasks:"பணிகள்", moreMenu:"மேலும்",
     tabLoans:"கடன்", tabPlanner:"கடன் திட்டம்", tabBudget:"பட்ஜெட்", tabReports:"அறிக்கைகள்", tabSettings:"அமைப்புகள்",
     theme:"தீம்", dashTitle:"சுருக்கம்",
     statIncome:"மொத்த வருமானம்", statExpense:"மொத்த செலவு", statSavings:"மொத்த சேமிப்பு",
@@ -1244,7 +1277,20 @@ function catLabelShort(list, enName){
   if(!c) return enName;
   return lang==='ta' ? c.ta : c.en;
 }
-function todayISO(){ return new Date().toISOString().slice(0,10); }
+// Format a Date as YYYY-MM-DD using LOCAL calendar fields (year/month/date),
+// never toISOString() — toISOString() converts to UTC first, which for any
+// positive UTC-offset timezone (e.g. India, UTC+5:30) silently shifts local
+// midnight back to the *previous* day (or even previous month, for the 1st
+// of a month) before formatting. That bug used to make every date-based
+// calculation in this app (today's date, month buckets, week buckets)
+// quietly run one day/month behind for users in such timezones.
+function toLocalISO(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function todayISO(){ return toLocalISO(new Date()); }
 function monthKey(dateStr){ return (dateStr||"").slice(0,7); }
 function isThisMonth(dateStr){ return monthKey(dateStr) === todayISO().slice(0,7); }
 function isThisYear(dateStr){ return (dateStr||"").slice(0,4) === todayISO().slice(0,4); }
@@ -1838,7 +1884,7 @@ function last6Months(){
   const now = new Date();
   for(let i=5;i>=0;i--){
     const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-    arr.push(d.toISOString().slice(0,7));
+    arr.push(toLocalISO(d).slice(0,7));
   }
   return arr;
 }
@@ -2054,7 +2100,7 @@ function currentWeekOccurrence(weekday){
   const monday = new Date(now); monday.setDate(now.getDate() - day + 1); monday.setHours(0,0,0,0);
   const offset = weekday === 0 ? 6 : weekday - 1; // Monday=0 ... Sunday=6
   const d = new Date(monday); d.setDate(monday.getDate() + offset);
-  return d.toISOString().slice(0,10);
+  return toLocalISO(d);
 }
 function taskPeriodKey(task){
   if(task.repeat === 'daily') return todayISO();
@@ -2688,9 +2734,18 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     if(btn.dataset.tab==='dashboard') renderDashboardCharts();
     if(btn.dataset.tab==='settings') renderBillReminderSettings();
     if(btn.dataset.tab==='tasks') renderTasks();
+    // Keep the fixed bottom nav (mobile) in sync with whichever tab is now
+    // active, whether it was opened from the bottom bar or the sidebar.
+    document.querySelectorAll('.bottom-nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===btn.dataset.tab));
     if(window.innerWidth < 880) setMenuCollapsed(true);
   });
 });
+// Bottom nav (mobile): each button just clicks the matching sidebar tab so
+// all the existing per-tab render logic above runs exactly once, in one place.
+document.querySelectorAll('.bottom-nav-btn[data-tab]').forEach(btn=>{
+  btn.addEventListener('click', ()=> document.querySelector(`.tab-btn[data-tab="${btn.dataset.tab}"]`)?.click());
+});
+document.getElementById('bottomNavMore')?.addEventListener('click', ()=> setMenuCollapsed(false));
 
 function renderAll(){
   renderDashboard();
