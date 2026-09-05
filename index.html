@@ -642,9 +642,10 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 
   <nav class="bottom-nav" id="bottomNav">
     <button class="bottom-nav-btn active" data-tab="dashboard"><span class="ic">🏠</span><span data-i18n="tabDashboard">Home</span></button>
-    <button class="bottom-nav-btn" data-tab="tasks"><span class="ic">✅</span><span data-i18n="tabTasks">Tasks</span></button>
+    <button class="bottom-nav-btn" data-tab="income"><span class="ic">💰</span><span data-i18n="tabIncome">Income</span></button>
+    <button class="bottom-nav-btn" data-tab="expense"><span class="ic">🧾</span><span data-i18n="tabExpense">Expense</span></button>
     <button class="bottom-nav-btn" data-tab="reports"><span class="ic">📊</span><span data-i18n="tabReports">Reports</span></button>
-    <button class="bottom-nav-btn" id="bottomNavMore" type="button"><span class="ic">⋯</span><span data-i18n="moreMenu">More</span></button>
+    <button class="bottom-nav-btn" data-tab="settings"><span class="ic">⚙️</span><span data-i18n="tabSettings">Settings</span></button>
   </nav>
 
   <main>
@@ -2743,7 +2744,6 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 document.querySelectorAll('.bottom-nav-btn[data-tab]').forEach(btn=>{
   btn.addEventListener('click', ()=> document.querySelector(`.tab-btn[data-tab="${btn.dataset.tab}"]`)?.click());
 });
-document.getElementById('bottomNavMore')?.addEventListener('click', ()=> setMenuCollapsed(false));
 
 function renderAll(){
   renderDashboard();
