@@ -217,22 +217,22 @@ main{ padding:20px 16px 0; }
   }
   html:not(.nav-collapsed) .nav-backdrop{ opacity:1; pointer-events:auto; }
 
-  .nav-fab{ left:14px; bottom:18px; width:50px; height:50px; border-radius:999px; font-size:19px; }
+  .nav-fab{ left:14px; right:auto; top:auto; bottom:18px; width:50px; height:50px; border-radius:999px; font-size:19px; transform:none; }
 
   /* Floating icon-only pill, sitting to the right of the hamburger circle
      (which reverts to its original job: opening the full tabs drawer). */
   .bottom-nav{
     display:flex; position:fixed; left:74px; right:14px; bottom:18px; z-index:110;
-    background:var(--card); border-radius:999px; gap:2px;
-    box-shadow:var(--shadow-lift); padding:8px 10px;
+    background:var(--card); border-radius:999px; gap:0;
+    box-shadow:var(--shadow-lift); padding:8px 4px;
   }
   .bottom-nav-btn{
     flex:1 1 0; display:flex; align-items:center; justify-content:center;
-    background:none; border:none; padding:8px; font-family:inherit;
-    color:var(--ink-soft); cursor:pointer; border-radius:999px;
+    background:none; border:none; padding:8px 2px; font-family:inherit;
+    color:var(--ink-soft); cursor:pointer; border-radius:999px; min-width:0;
   }
   .bottom-nav-btn span:not(.ic){ display:none; }
-  .bottom-nav-btn .ic{ font-size:20px; line-height:1; }
+  .bottom-nav-btn .ic{ font-size:18px; line-height:1; }
   .bottom-nav-btn.active{ background:var(--turmeric-bg); color:var(--ledger-red); }
   [data-theme="dark"] .bottom-nav-btn.active{ background:rgba(224,119,107,.18); color:var(--ledger-red); }
   /* Leave room at the bottom of the page so the floating pill never covers
@@ -642,6 +642,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 
   <nav class="bottom-nav" id="bottomNav">
     <button class="bottom-nav-btn active" data-tab="dashboard"><span class="ic">🏠</span><span data-i18n="tabDashboard">Home</span></button>
+    <button class="bottom-nav-btn" data-tab="tasks"><span class="ic">✅</span><span data-i18n="tabTasks">Tasks</span></button>
     <button class="bottom-nav-btn" data-tab="income"><span class="ic">💰</span><span data-i18n="tabIncome">Income</span></button>
     <button class="bottom-nav-btn" data-tab="expense"><span class="ic">🧾</span><span data-i18n="tabExpense">Expense</span></button>
     <button class="bottom-nav-btn" data-tab="reports"><span class="ic">📊</span><span data-i18n="tabReports">Reports</span></button>
