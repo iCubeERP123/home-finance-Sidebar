@@ -14,5 +14,35 @@
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Income / வருமானம் சேர்",
+      "short_name": "Income",
+      "description": "Jump straight to the Income tab",
+      "url": "./index.html#income",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Add Expense / செலவு சேர்",
+      "short_name": "Expense",
+      "description": "Jump straight to the Expense tab",
+      "url": "./index.html#expense",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Tasks / பணிகள்",
+      "short_name": "Tasks",
+      "description": "Jump straight to today's Tasks",
+      "url": "./index.html#tasks",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Reports / அறிக்கைகள்",
+      "short_name": "Reports",
+      "description": "Jump straight to Reports",
+      "url": "./index.html#reports",
+      "icons": [{ "src": "icon-192.png", "sizes": "192x192" }]
+    }
   ]
 }

@@ -2803,6 +2803,7 @@ async function onAuthReady(user){
     await loadAllData();
     renderAll();
     renderAccountInfo();
+    openTabFromUrlHash();
     overlay.style.display = 'none';
     if(passcode) showLockScreen();
   }catch(err){
@@ -2954,6 +2955,15 @@ document.addEventListener('keydown', (e)=>{
 setMenuCollapsed(getStoredMenuCollapsed(), {silent:true});
 
 /* ---------------------------- Tabs & init ---------------------------- */
+// PWA App Shortcuts (long-press the installed app icon) deep-link here via
+// index.html#income, #expense, #tasks, #reports — this opens that tab once
+// the app has finished loading and rendering.
+function openTabFromUrlHash(){
+  const tabName = location.hash.replace('#','');
+  if(!tabName) return;
+  const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+  if(btn) btn.click();
+}
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
