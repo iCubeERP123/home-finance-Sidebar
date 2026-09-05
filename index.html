@@ -875,7 +875,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
         <h3 style="font-size:15px; margin-bottom:10px;">🎯 <span data-i18n="savingsGoal">Savings Goal</span></h3>
         <div class="settings-actions">
           <input type="number" id="savingsGoalInput" min="0" placeholder="e.g. 100000" style="flex:1 1 160px;">
-          <button class="btn sm" onclick="saveSavingsGoalFromSettings()" data-i18n="saveGoal">Save Goal</button>
+          <button class="btn sm" id="savingsGoalSaveBtn" onclick="saveSavingsGoalFromSettings()" data-i18n="saveGoal">Save Goal</button>
         </div>
       </div>
 
@@ -1950,13 +1950,35 @@ function renderDashboardTasksCard(){
 }
 // Savings goal is a personal on-device target (not shared financial data),
 // so it's kept simply in localStorage rather than a new Supabase table.
-function getSavingsGoal(){ return Number(localStorage.getItem('savingsGoal')) || 0; }
-function setSavingsGoal(v){ localStorage.setItem('savingsGoal', String(Math.max(0, Number(v)||0))); }
-function saveSavingsGoalFromSettings(){
+// Savings goal is stored on the profiles table (same place as pin_code),
+// so it syncs across every device the user logs into.
+let savingsGoal = 0;
+async function loadSavingsGoalFromDb(){
+  if(!currentUser){ savingsGoal = 0; return; }
+  try{
+    const { data, error } = await supabase.from('profiles').select('savings_goal').eq('id', currentUser.id).maybeSingle();
+    if(error) throw error;
+    savingsGoal = Number(data?.savings_goal) || 0;
+  }catch(err){ console.error(err); savingsGoal = 0; }
+}
+function getSavingsGoal(){ return savingsGoal; }
+async function saveSavingsGoalFromSettings(){
   const input = document.getElementById('savingsGoalInput');
-  setSavingsGoal(input.value);
-  toast(tText('savedMsg'));
-  renderSavingsGoalCard(sumBy(state.savings));
+  const goal = Math.max(0, Number(input.value)||0);
+  const btn = document.getElementById('savingsGoalSaveBtn');
+  if(btn) btn.disabled = true;
+  try{
+    const { error } = await supabase.from('profiles').update({ savings_goal: goal }).eq('id', currentUser.id);
+    if(error) throw error;
+    savingsGoal = goal;
+    toast(tText('savedMsg'));
+    renderSavingsGoalCard(sumBy(state.savings));
+  }catch(err){
+    console.error(err);
+    toast(tText('saveError') + (err?.message ? ' (' + err.message + ')' : ''));
+  } finally {
+    if(btn) btn.disabled = false;
+  }
 }
 const SAVINGS_MILESTONES = [25, 50, 75, 100];
 function renderSavingsGoalCard(totalSavings){
@@ -2798,6 +2820,7 @@ async function onAuthReady(user){
   try{
     await ensureProfile(user);
     await loadPinFromDb();
+    await loadSavingsGoalFromDb();
     await loadReminderCatsFromDb();
     await loadCustomCategoriesFromDb();
     await loadAllData();
