@@ -341,13 +341,10 @@ main{ padding:20px 16px 0; }
   }
   .nav-fab:hover{ width:32px; transform:translateY(-50%); }
 }
-.tab-panel{ display:none; }
-.tab-panel.active{ display:block; transform-origin:left center; animation:pageFlipIn .38s cubic-bezier(.4,0,.2,1); }
-@keyframes pageFlipIn{
-  0%{ transform:perspective(900px) rotateY(-10deg) translateX(-8px); opacity:0; }
-  100%{ transform:perspective(900px) rotateY(0deg) translateX(0); opacity:1; }
-}
-@media (prefers-reduced-motion: reduce){ .tab-panel.active{ animation:none; } }
+.tab-panel{ display:none; animation:fadeIn .25s ease; }
+.tab-panel.active{ display:block; }
+@keyframes fadeIn{ from{opacity:0; transform:translateY(5px);} to{opacity:1; transform:none;} }
+@media (prefers-reduced-motion: reduce){ .tab-panel{ animation:none; } }
 
 .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
 .section-head h2{ font-size:21px; }
@@ -492,17 +489,6 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 
 .progress-track{ height:14px; border-radius:999px; background:var(--paper-deep); overflow:hidden; border:1px solid var(--line); }
 .progress-fill{ height:100%; background:linear-gradient(90deg, var(--teal), var(--turmeric)); border-radius:999px; transition:width .4s ease; }
-
-.confetti-piece{
-  position:fixed; width:7px; height:7px; border-radius:2px; z-index:500;
-  animation:confetti-burst .8s ease-out forwards; pointer-events:none;
-}
-@keyframes confetti-burst{
-  0%{ transform:translate(0,0) rotate(0deg); opacity:1; }
-  100%{ transform:translate(var(--dx), calc(var(--dy) + 90px)) rotate(360deg); opacity:0; }
-}
-.task-checkbox:checked{ animation:checkbox-pop .32s cubic-bezier(.34,1.56,.64,1); }
-@keyframes checkbox-pop{ 0%{ transform:scale(1); } 45%{ transform:scale(1.35); } 100%{ transform:scale(1); } }
 
 .chart-wrap{ position:relative; height:230px; margin-top:6px; }
 .chart-wrap.tall{ height:280px; }
@@ -706,7 +692,6 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
       <div id="notifArea"></div>
       <div id="dashTasksCard"></div>
       <div class="grid cols-3" id="dashStats"></div>
-      <div id="dashSavingsGoal"></div>
       <div class="grid cols-2" style="margin-top:14px;">
         <div class="card">
           <h3 style="font-size:15px; margin-bottom:8px;" data-i18n="chartIncomeExpense">Income vs Expense</h3>
@@ -868,14 +853,6 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
           <button class="btn ghost sm" onclick="setLang('ta')" data-i18n="tamilBtn">தமிழ்</button>
           <button class="btn ghost sm" onclick="setTheme('light')" data-i18n="lightMode">☀️ Light</button>
           <button class="btn ghost sm" onclick="setTheme('dark')" data-i18n="darkMode">🌙 Dark</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 style="font-size:15px; margin-bottom:10px;">🎯 <span data-i18n="savingsGoal">Savings Goal</span></h3>
-        <div class="settings-actions">
-          <input type="number" id="savingsGoalInput" min="0" placeholder="e.g. 100000" style="flex:1 1 160px;">
-          <button class="btn sm" onclick="saveSavingsGoalFromSettings()" data-i18n="saveGoal">Save Goal</button>
         </div>
       </div>
 
@@ -1105,8 +1082,6 @@ const T = {
     addTask:"Add Task", editTask:"Edit Task", taskTitle:"Task", repeatType:"Repeats", repeatNone:"One-time", repeatDaily:"Daily", repeatWeekly:"Weekly",
     todaysTasks:"Today's Tasks", tasksPendingToday:"pending today", allTasksDoneToday:"All tasks done for today! 🎉", viewAllTasks:"View all",
     dueDate:"Due Date (optional)", dueLabel:"Due", overdueLabel:"Overdue",
-    savingsGoal:"Savings Goal", savingsGoalPlaceholder:"e.g. 100000", saveGoal:"Save Goal",
-    savingsGoalProgress:"Savings Goal Progress", goalReached:"🎉 Goal reached!", noGoalSet:"Set a savings goal in Settings to track progress here.",
     everyDay:"Every day", everyWeekOn:"Every week on", dayOfWeek:"Day of the week",
     weekdaySun:"Sunday", weekdayMon:"Monday", weekdayTue:"Tuesday", weekdayWed:"Wednesday", weekdayThu:"Thursday", weekdayFri:"Friday", weekdaySat:"Saturday",
     tasksNoEntries:"No tasks yet", tasksNoEntriesSub:"Tap the button above to add your first task.",
@@ -1169,8 +1144,6 @@ const T = {
     addTask:"பணி சேர்", editTask:"பணி திருத்து", taskTitle:"பணி", repeatType:"திரும்ப நிகழ்வு", repeatNone:"ஒருமுறை", repeatDaily:"தினமும்", repeatWeekly:"வாரந்தோறும்",
     todaysTasks:"இன்றைய பணிகள்", tasksPendingToday:"இன்னும் முடிக்கவில்லை", allTasksDoneToday:"இன்றைய பணிகள் அனைத்தும் முடிந்தது! 🎉", viewAllTasks:"அனைத்தையும் பார்",
     dueDate:"குறிப்பிட்ட தேதி (விருப்பம்)", dueLabel:"தேதி", overdueLabel:"தேதி தாண்டியது",
-    savingsGoal:"சேமிப்பு இலக்கு", savingsGoalPlaceholder:"உ.ம். 100000", saveGoal:"இலக்கு சேமி",
-    savingsGoalProgress:"சேமிப்பு இலக்கு முன்னேற்றம்", goalReached:"🎉 இலக்கு எட்டிவிட்டது!", noGoalSet:"இங்க progress பாக்க, Settings-ல ஒரு சேமிப்பு இலக்கை வையுங்கள்.",
     everyDay:"தினமும்", everyWeekOn:"ஒவ்வொரு வாரமும்", dayOfWeek:"வாரத்தின் நாள்",
     weekdaySun:"ஞாயிறு", weekdayMon:"திங்கள்", weekdayTue:"செவ்வாய்", weekdayWed:"புதன்", weekdayThu:"வியாழன்", weekdayFri:"வெள்ளி", weekdaySat:"சனி",
     tasksNoEntries:"இன்னும் பணிகள் இல்லை", tasksNoEntriesSub:"முதல் பணியை சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்.",
@@ -1214,64 +1187,6 @@ const T = {
     saveError:"சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.", deleteError:"நீக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.", titleRequired:"தயவுசெய்து பணியின் பெயரை உள்ளிடவும்.",
     otpSent:"OTP குறியீடு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டது.", passwordReset:"கடவுச்சொல் மீட்டமைக்கப்பட்டது. நீங்கள் உள்நுழைந்துவிட்டீர்கள்.",
     loadingLedger:"உங்கள் கணக்கு ஏற்றப்படுகிறது…",
-  },
-  hi: {
-    appTitle: "होम फाइनेंस",appTagline: "पैसा, आसान तरीके से",
-    tabDashboard:"होम", tabIncome:"आय", tabExpense:"खर्च", tabSavings:"बचत", tabTasks:"कार्य", moreMenu:"और",
-    tabLoans:"ऋण", tabPlanner:"ऋण योजना", tabBudget:"बजट", tabReports:"रिपोर्ट", tabSettings:"सेटिंग्स",
-    theme:"थीम", dashTitle:"सारांश",
-    statIncome:"कुल आय", statExpense:"कुल खर्च", statSavings:"कुल बचत",
-    statLoan:"कुल ऋण शेष", statBalance:"शेष (हर समय)", statSavingsPct:"बचत प्रतिशत",
-    allTimeSuffix:"हर समय", reportBalance:"शेष",
-    chartIncomeExpense:"आय बनाम खर्च", chartMonthlyExpense:"मासिक खर्च",
-    chartSavingsGrowth:"बचत वृद्धि", chartLoanBalance:"ऋण शेष",
-    addIncome:"आय जोड़ें", addExpense:"खर्च जोड़ें", addSavings:"बचत जोड़ें", addLoan:"ऋण जोड़ें",
-    addTask:"कार्य जोड़ें", editTask:"कार्य संपादित करें", taskTitle:"कार्य", repeatType:"दोहराव", repeatNone:"एक बार", repeatDaily:"रोज़ाना", repeatWeekly:"साप्ताहिक",
-    todaysTasks:"आज के कार्य", tasksPendingToday:"आज बाकी", allTasksDoneToday:"आज के सभी कार्य पूरे हो गए! 🎉", viewAllTasks:"सभी देखें",
-    dueDate:"नियत तारीख (वैकल्पिक)", dueLabel:"तारीख", overdueLabel:"समय सीमा बीत गई",
-    everyDay:"हर दिन", everyWeekOn:"हर हफ्ते", dayOfWeek:"सप्ताह का दिन",
-    weekdaySun:"रविवार", weekdayMon:"सोमवार", weekdayTue:"मंगलवार", weekdayWed:"बुधवार", weekdayThu:"गुरुवार", weekdayFri:"शुक्रवार", weekdaySat:"शनिवार",
-    tasksNoEntries:"अभी तक कोई कार्य नहीं", tasksNoEntriesSub:"अपना पहला कार्य जोड़ने के लिए ऊपर दिए बटन को दबाएं।",
-    date:"तारीख", category:"श्रेणी", amount:"राशि (₹)", notes:"टिप्पणी (वैकल्पिक)",
-    save:"सेव करें", cancelBtn:"रद्द करें", edit:"", delete:"",
-    noEntries:"अभी तक कोई प्रविष्टि नहीं", noEntriesSub:"अपनी पहली प्रविष्टि जोड़ने के लिए ऊपर दिए बटन को दबाएं।",
-    filterToday:"आज", filterWeek:"इस सप्ताह", filterMonth:"इस महीने", filterYear:"इस साल", filterAll:"सभी",
-    interestTracking:"ब्याज भुगतान ट्रैकिंग", interestMonthly:"मासिक ब्याज",
-    interestPaid:"चुकाया गया ब्याज", interestRemaining:"शेष ब्याज", interestPaidByMonth:"महीने के अनुसार चुकाया गया ब्याज",
-    loanName:"ऋण का नाम", loanType:"ऋण प्रकार", loanAmount:"ऋण राशि (₹)", interestRate:"ब्याज दर (% प्रति वर्ष)",
-    emi:"EMI (₹ / महीना)", startDate:"शुरुआत तारीख", endDate:"समाप्ति तारीख (अनुमानित)", remaining:"शेष राशि (₹)",
-    plannerTitle:"ऋण मुक्ति योजना",
-    plannerSub:"अपने ऋण का विवरण डालें और कर्ज़-मुक्त होने का सबसे बेहतर तरीका जानें।",
-    monthlyPayment:"मासिक भुगतान (₹)", extraPayment:"अतिरिक्त भुगतान / महीना (₹)", calculate:"योजना की गणना करें",
-    resultMonths:"पूरा होने में महीने", resultInterest:"कुल चुकाया गया ब्याज", resultDate:"अनुमानित समाप्ति तारीख",
-    resultSaved:"अतिरिक्त भुगतान से बचे महीने", plannerWarn:"यह राशि ऋण को कभी नहीं चुका पाएगी — मासिक या अतिरिक्त भुगतान बढ़ाएं।",
-    budgetTitle:"मासिक बजट योजना", setBudget:"बजट सेट करें",
-    expectedIncome:"अनुमानित आय (₹)", expectedExpense:"अनुमानित खर्च (₹)", expectedSavings:"अनुमानित बचत (₹)",
-    month:"महीना", actual:"वास्तविक", expected:"अनुमानित", statusSafe:"सुरक्षित", statusWarning:"चेतावनी", statusOver:"बजट से अधिक",
-    languageTheme:"भाषा और रूप", englishBtn:"English", tamilBtn:"தமிழ்", lightMode:"☀️ लाइट", darkMode:"🌙 डार्क",
-    security:"सुरक्षा", securityNote:"आपके खाते में सेव किया गया PIN लॉक। इस या किसी भी डिवाइस पर ऐप खोलने पर हर बार यह पूछा जाएगा।",
-    setPasscode:"पासकोड सेट करें", enableLock:"लॉक चालू करें", disableLock:"लॉक बंद करें", lockNow:"अभी लॉक करें",
-    billReminders:"बिल रिमाइंडर", billRemindersNote:"चुनें कि हर महीने भुगतान न होने पर कौन-सी खर्च श्रेणियां आपको याद दिलाएं।",
-    savingsReminders:"बचत रिमाइंडर", savingsRemindersNote:"चुनें कि हर महीने न जोड़े जाने पर कौन-सी बचत श्रेणियां आपको याद दिलाएं।",
-    backupRestore:"बैकअप और रीस्टोर", backupNote:"आपका डेटा अपने आप आपके Supabase डेटाबेस में सेव हो जाता है। एक अतिरिक्त ऑफलाइन कॉपी के लिए या JSON फ़ाइल से डेटा लोड करने के लिए इन बटनों का उपयोग करें।",
-    downloadBackup:"बैकअप डाउनलोड करें", restoreBackup:"बैकअप रीस्टोर करें", dangerZone:"खतरे का क्षेत्र", clearAll:"सारा डेटा मिटाएं",
-    footerText:"परिवारों के लिए, तमिल और अंग्रेज़ी में 🪔",
-    lockTitle:"पासकोड डालें", lockSub:"आपके खाते के लिए PIN लॉक।", unlock:"अनलॉक करें", lockWrong:"गलत पासकोड। फिर से कोशिश करें।",
-    confirmTitle:"क्या आप निश्चित हैं?", confirmYes:"हां, हटाएं", confirmDeleteBody:"यह प्रविष्टि डेटाबेस से हमेशा के लिए हटा दी जाएगी।",
-    confirmClearBody:"इससे आपकी सारी आय, खर्च, बचत, ऋण और बजट का डेटा डेटाबेस से हमेशा के लिए मिट जाएगा। इसे वापस नहीं लाया जा सकता। पहले बैकअप डाउनलोड करने पर विचार करें।",
-    savedMsg:"सेव हो गया!", deletedMsg:"हटा दिया गया।", clearedMsg:"सारा डेटा मिटा दिया गया।", backupDownloaded:"बैकअप डाउनलोड हो गया।",
-    backupRestored:"बैकअप रीस्टोर हो गया।", backupError:"वह बैकअप फ़ाइल पढ़ी नहीं जा सकी।", lockEnabled:"पासकोड लॉक चालू करके अभी लागू कर दिया गया।",
-    lockDisabled:"पासकोड लॉक बंद कर दिया गया।", enterPasscode:"पहले एक पासकोड डालें।", noPasscodeSet:"अभी तक कोई पासकोड सेट नहीं है।",
-    notifEmi:"EMI रिमाइंडर", notifEmiBody:"इस महीने देना बाकी है",
-    notifBill:"बिल रिमाइंडर", notifBillBody:"इस महीने अभी तक दर्ज नहीं किया गया",
-    notifSavings:"बचत रिमाइंडर", notifSavingsBody:"इस महीने अभी तक जोड़ा नहीं गया",
-    notifSavingsGoal:"बचत लक्ष्य रिमाइंडर", notifSavingsGoalBody:"आप इस महीने के बचत लक्ष्य से अभी भी पीछे हैं",
-    reportsSearch:"रिपोर्ट में खोजें", noResults:"कोई मिलती-जुलती प्रविष्टि नहीं", searchPH:"श्रेणी, टिप्पणी या राशि से खोजें",
-    fillRequired:"कृपया सभी आवश्यक फ़ील्ड सही तरीके से भरें।",
-    loadError:"डेटाबेस से डेटा लोड नहीं हो सका। अपना कनेक्शन जांचें और फिर से लोड करें।",
-    saveError:"सेव नहीं हो सका। फिर से कोशिश करें।", deleteError:"हटाया नहीं जा सका। फिर से कोशिश करें।", titleRequired:"कृपया कार्य का नाम डालें।",
-    otpSent:"OTP कोड आपके ईमेल पर भेज दिया गया है।", passwordReset:"पासवर्ड रीसेट हो गया। आप लॉग इन हो चुके हैं।",
-    loadingLedger:"आपका लेजर लोड हो रहा है…",
   }
 };
 
@@ -1312,26 +1227,7 @@ const DEFAULT_SAVINGS_REMINDER_CATS = [];
 const BILL_REMINDER_STORAGE_KEY = "hfl_bill_reminder_cats_v2";
 
 /* ---------------------------- State ---------------------------- */
-const LANG_STORAGE_KEY = "hfl_lang_v1";
-// First-ever visit (nothing saved yet): auto-pick Hindi/Tamil/English from
-// the device/browser language, so people don't have to find the toggle
-// before the app speaks their language. Once they use the toggle (or this
-// runs once), the choice is remembered and auto-detect no longer overrides it.
-function detectDefaultLang(){
-  try{
-    const saved = localStorage.getItem(LANG_STORAGE_KEY);
-    if(saved === 'ta' || saved === 'en' || saved === 'hi') return saved;
-  } catch(e){ /* storage unavailable, fall through to detection */ }
-  const browserLangs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ''];
-  for(const l of browserLangs){
-    const code = (l||'').toLowerCase();
-    if(code.startsWith('hi')) return 'hi';
-    if(code.startsWith('ta')) return 'ta';
-    if(code.startsWith('en')) return 'en';
-  }
-  return 'ta'; // app's original default when detection is inconclusive
-}
-let lang = detectDefaultLang();
+let lang = "ta";
 let theme = "light";
 let locked = false;
 let passcode = null;
@@ -1401,40 +1297,6 @@ function biRawText(ta, en){
 function fmtINR(n){
   n = Number(n)||0;
   return n.toLocaleString('en-IN', {style:'currency', currency:'INR', maximumFractionDigits:0});
-}
-// Animates a dashboard number from 0 up to its real value on render — a
-// small "wow" touch. formatFn receives the in-progress numeric value each
-// frame and returns the string to display (fmtINR, a percentage, etc).
-function animateCountUp(el, endValue, formatFn, duration=700){
-  if(!el) return;
-  const start = performance.now();
-  function tick(now){
-    const p = Math.min((now-start)/duration, 1);
-    const eased = 1 - Math.pow(1-p, 3); // ease-out cubic
-    el.textContent = formatFn(endValue*eased);
-    if(p<1) requestAnimationFrame(tick);
-    else el.textContent = formatFn(endValue);
-  }
-  requestAnimationFrame(tick);
-}
-// A small celebratory burst of colored pieces from a screen point — used
-// when a task is ticked done and when a savings goal is freshly reached.
-function fireConfetti(x, y, count=20){
-  const colors = ['#B23A2E','#1F3A5F','#D4A017','#2E7D6B','#8E44AD'];
-  for(let i=0;i<count;i++){
-    const el = document.createElement('div');
-    el.className = 'confetti-piece';
-    const angle = Math.random()*Math.PI*2;
-    const dist = 40 + Math.random()*90;
-    el.style.setProperty('--dx', (Math.cos(angle)*dist).toFixed(1)+'px');
-    el.style.setProperty('--dy', (Math.sin(angle)*dist).toFixed(1)+'px');
-    el.style.left = x+'px';
-    el.style.top = y+'px';
-    el.style.background = colors[i%colors.length];
-    el.style.transform = `rotate(${(Math.random()*360).toFixed(0)}deg)`;
-    document.body.appendChild(el);
-    el.addEventListener('animationend', ()=> el.remove());
-  }
 }
 function catLabel(list, enName){
   const c = list.find(c=>c.en===enName);
@@ -1905,20 +1767,13 @@ function renderDashboard(){
   document.getElementById('dashDateLabel').textContent = new Date().toLocaleDateString(lang==='ta'?'ta-IN':'en-IN', {month:'long', year:'numeric'});
   renderDashboardTasksCard();
   document.getElementById('dashStats').innerHTML = `
-    <div class="stat-card"><div class="ic">💰</div><div class="num good" id="statIncomeVal">₹0</div><div class="lbl">${tAllTime('statIncome')}</div></div>
-    <div class="stat-card"><div class="ic">🧾</div><div class="num bad" id="statExpenseVal">₹0</div><div class="lbl">${tAllTime('statExpense')}</div></div>
-    <div class="stat-card"><div class="ic">🐖</div><div class="num" id="statSavingsVal">₹0</div><div class="lbl">${tAllTime('statSavings')}</div></div>
-    <div class="stat-card"><div class="ic">🏦</div><div class="num bad" id="statLoanVal">₹0</div><div class="lbl">${t('statLoan')}</div></div>
-    <div class="stat-card"><div class="ic">📆</div><div class="num ${overallBalance>=0?'good':'bad'}" id="statBalanceVal">₹0</div><div class="lbl">${t('statBalance')}</div></div>
-    <div class="stat-card"><div class="ic">%</div><div class="num" id="statPctVal">0.0%</div><div class="lbl">${t('statSavingsPct')}</div></div>
+    <div class="stat-card"><div class="ic">💰</div><div class="num good">${fmtINR(totalIncome)}</div><div class="lbl">${tAllTime('statIncome')}</div></div>
+    <div class="stat-card"><div class="ic">🧾</div><div class="num bad">${fmtINR(totalExpense)}</div><div class="lbl">${tAllTime('statExpense')}</div></div>
+    <div class="stat-card"><div class="ic">🐖</div><div class="num">${fmtINR(totalSavings)}</div><div class="lbl">${tAllTime('statSavings')}</div></div>
+    <div class="stat-card"><div class="ic">🏦</div><div class="num bad">${fmtINR(totalLoan)}</div><div class="lbl">${t('statLoan')}</div></div>
+    <div class="stat-card"><div class="ic">📆</div><div class="num ${overallBalance>=0?'good':'bad'}">${fmtINR(overallBalance)}</div><div class="lbl">${t('statBalance')}</div></div>
+    <div class="stat-card"><div class="ic">%</div><div class="num">${savingsPct.toFixed(1)}%</div><div class="lbl">${t('statSavingsPct')}</div></div>
   `;
-  animateCountUp(document.getElementById('statIncomeVal'), totalIncome, fmtINR);
-  animateCountUp(document.getElementById('statExpenseVal'), totalExpense, fmtINR);
-  animateCountUp(document.getElementById('statSavingsVal'), totalSavings, fmtINR);
-  animateCountUp(document.getElementById('statLoanVal'), totalLoan, fmtINR);
-  animateCountUp(document.getElementById('statBalanceVal'), overallBalance, fmtINR);
-  animateCountUp(document.getElementById('statPctVal'), savingsPct, v=>v.toFixed(1)+'%');
-  renderSavingsGoalCard(totalSavings);
   renderNotifications();
   renderDashboardCharts();
 }
@@ -1947,45 +1802,6 @@ function renderDashboardTasksCard(){
       <button class="btn ghost sm" onclick="document.querySelector('.tab-btn[data-tab=tasks]').click()">${t('viewAllTasks')}</button>
     </div>
   `;
-}
-// Savings goal is a personal on-device target (not shared financial data),
-// so it's kept simply in localStorage rather than a new Supabase table.
-function getSavingsGoal(){ return Number(localStorage.getItem('savingsGoal')) || 0; }
-function setSavingsGoal(v){ localStorage.setItem('savingsGoal', String(Math.max(0, Number(v)||0))); }
-function saveSavingsGoalFromSettings(){
-  const input = document.getElementById('savingsGoalInput');
-  setSavingsGoal(input.value);
-  toast(tText('savedMsg'));
-  renderSavingsGoalCard(sumBy(state.savings));
-}
-const SAVINGS_MILESTONES = [25, 50, 75, 100];
-function renderSavingsGoalCard(totalSavings){
-  const el = document.getElementById('dashSavingsGoal');
-  if(!el) return;
-  const goal = getSavingsGoal();
-  if(goal <= 0){
-    el.innerHTML = `<div class="card plain" style="padding:14px 16px; margin-bottom:14px; color:var(--ink-soft); font-size:13.5px;">🎯 ${t('noGoalSet')}</div>`;
-    return;
-  }
-  const pct = Math.min(100, (totalSavings/goal)*100);
-  const prevPct = Number(el.dataset.lastPct || 0);
-  el.innerHTML = `
-    <div class="card plain" style="padding:14px 16px; margin-bottom:14px;">
-      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; flex-wrap:wrap; gap:4px;">
-        <div style="font-weight:700;">🎯 ${t('savingsGoalProgress')}</div>
-        <div class="lbl-sub">${fmtINR(totalSavings)} / ${fmtINR(goal)} (${pct.toFixed(0)}%)</div>
-      </div>
-      <div class="progress-track"><div class="progress-fill" style="width:${pct}%;"></div></div>
-      <div style="display:flex; justify-content:space-between; margin-top:8px;">
-        ${SAVINGS_MILESTONES.map(m=>`<span style="font-size:16px; opacity:${pct>=m?1:.28};" title="${m}%">${pct>=m ? '🏅' : '⚪'}</span>`).join('')}
-      </div>
-      ${pct>=100 ? `<div style="margin-top:8px; color:var(--teal); font-weight:600;">${t('goalReached')}</div>` : ''}
-    </div>
-  `;
-  // Fire confetti once, the moment the goal is freshly crossed to 100%
-  // (not on every re-render while already at 100%).
-  if(pct>=100 && prevPct<100) fireConfetti();
-  el.dataset.lastPct = pct;
 }
 
 /* ---------------------------- Notifications ---------------------------- */
@@ -2055,8 +1871,6 @@ async function saveReminderCats(){
   }catch(err){ console.error(err); toast(tText('saveError')); }
 }
 function renderBillReminderSettings(){
-  const goalInput = document.getElementById('savingsGoalInput');
-  if(goalInput && document.activeElement !== goalInput) goalInput.value = getSavingsGoal() || '';
   const billEl = document.getElementById('bill-reminder-list');
   if(billEl){
     billEl.innerHTML = EXPENSE_CATS.map(c=>{
@@ -2331,10 +2145,9 @@ function isTaskDoneNow(task){
   if(task.repeat === 'none') return dates.length > 0;
   return dates.includes(taskPeriodKey(task));
 }
-async function toggleTaskDone(id, ev){
+async function toggleTaskDone(id){
   const task = state.tasks.find(t=>t.id===id);
   if(!task) return;
-  const wasDone = isTaskDoneNow(task);
   try{
     const dates = task.completedDates || [];
     let next;
@@ -2346,12 +2159,6 @@ async function toggleTaskDone(id, ev){
     }
     const updated = await dbUpdate('tasks', id, { completedDates: next });
     Object.assign(task, updated);
-    // A little celebration exactly when a task flips from pending -> done
-    // (not when un-checking it), right where the checkbox was tapped.
-    if(!wasDone && isTaskDoneNow(task) && ev?.target){
-      const rect = ev.target.getBoundingClientRect();
-      fireConfetti(rect.left+rect.width/2, rect.top+rect.height/2, 12);
-    }
     renderTasks();
   } catch(err){
     console.error(err);
@@ -2473,7 +2280,7 @@ function renderTasks(){
   listEl.innerHTML = sorted.map(task=>{
     const done = isTaskDoneNow(task);
     return `<div class="item-row">
-      <input type="checkbox" ${done?'checked':''} onchange="toggleTaskDone('${task.id}', event)" class="task-checkbox" style="width:20px;height:20px;flex:0 0 auto;cursor:pointer;">
+      <input type="checkbox" ${done?'checked':''} onchange="toggleTaskDone('${task.id}')" style="width:20px;height:20px;flex:0 0 auto;cursor:pointer;">
       <div class="info">
         <div class="name" style="${done?'text-decoration:line-through;opacity:.6;':''}">${escapeHtml(task.title)}</div>
         <div class="meta">${taskRepeatLabel(task)}</div>
@@ -2587,22 +2394,18 @@ function downloadBlob(blob, filename){
 }
 
 /* ---------------------------- Settings: language / theme / lock / backup ---------------------------- */
-function setLang(l){
-  lang = l; document.documentElement.lang = l;
-  try{ localStorage.setItem(LANG_STORAGE_KEY, l); }catch(e){ /* storage unavailable, ignore */ }
-  applyTranslations(); renderAll();
-}
+function setLang(l){ lang = l; document.documentElement.lang = l; applyTranslations(); renderAll(); }
 function setTheme(th){ theme = th; document.documentElement.setAttribute('data-theme', th); }
 function applyTranslations(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{
     const key = el.getAttribute('data-i18n');
     el.innerHTML = t(key);
   });
-  document.getElementById('langToggleLabel').textContent = lang==='ta' ? 'தமிழ்' : (lang==='hi' ? 'हिंदी' : 'EN');
+  document.getElementById('langToggleLabel').textContent = lang==='ta' ? 'தமிழ்' : 'EN';
   document.querySelectorAll('.search-input').forEach(el=> el.placeholder = tText('searchPH'));
   renderBillReminderSettings();
 }
-document.getElementById('langToggle')?.addEventListener('click', ()=> setLang(lang==='ta'?'en':(lang==='en'?'hi':'ta')));
+document.getElementById('langToggle')?.addEventListener('click', ()=> setLang(lang==='ta'?'en':'ta'));
 document.getElementById('themeToggle')?.addEventListener('click', ()=> setTheme(theme==='light'?'dark':'light'));
 document.getElementById('headerLockBtn')?.addEventListener('click', ()=>{
   if(!passcode){
@@ -2998,7 +2801,6 @@ Object.assign(window, {
   downloadBackup, restoreBackup, confirmClearAll, renderList, renderReports,
   logout, handleCatSelectChange, closeCategoryModal, saveCategory,
   openTaskModal, closeTaskModal, saveTask, askDeleteTask, toggleTaskDone,
-  saveSavingsGoalFromSettings,
 });
 
 // Keep the app in sync if the user logs out (or their session expires) in
