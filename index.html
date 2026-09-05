@@ -217,12 +217,12 @@ main{ padding:20px 16px 0; }
   }
   html:not(.nav-collapsed) .nav-backdrop{ opacity:1; pointer-events:auto; }
 
-  .nav-fab{ left:14px; right:auto; top:auto; bottom:18px; width:50px; height:50px; border-radius:999px; font-size:19px; transform:none; }
+  .nav-fab{ right:14px; left:auto; top:auto; bottom:18px; width:50px; height:50px; border-radius:999px; font-size:19px; transform:none; }
 
-  /* Floating icon-only pill, sitting to the right of the hamburger circle
+  /* Floating icon-only pill, sitting to the left of the hamburger circle
      (which reverts to its original job: opening the full tabs drawer). */
   .bottom-nav{
-    display:flex; position:fixed; left:74px; right:14px; bottom:18px; z-index:110;
+    display:flex; position:fixed; left:14px; right:74px; bottom:18px; z-index:110;
     background:var(--card); border-radius:999px; gap:0;
     box-shadow:var(--shadow-lift); padding:8px 4px;
   }
