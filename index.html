@@ -219,25 +219,23 @@ main{ padding:20px 16px 0; }
 
   .nav-fab{ left:14px; bottom:18px; width:50px; height:50px; border-radius:999px; font-size:19px; }
 
-  /* Bottom nav takes over quick access + the drawer-opening job on mobile,
-     so the old floating hamburger (nav-fab) steps aside here. */
-  .nav-fab{ display:none !important; }
-
+  /* Floating icon-only pill, sitting to the right of the hamburger circle
+     (which reverts to its original job: opening the full tabs drawer). */
   .bottom-nav{
-    display:flex; position:fixed; left:0; right:0; bottom:0; z-index:110;
-    background:var(--card); border-top:1px solid var(--line);
-    box-shadow:0 -2px 14px rgba(20,15,10,.12);
-    padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));
+    display:flex; position:fixed; left:74px; right:14px; bottom:18px; z-index:110;
+    background:var(--card); border-radius:999px; gap:2px;
+    box-shadow:var(--shadow-lift); padding:8px 10px;
   }
   .bottom-nav-btn{
-    flex:1 1 0; display:flex; flex-direction:column; align-items:center; gap:2px;
-    background:none; border:none; padding:6px 2px; font-family:inherit;
-    font-size:11px; color:var(--ink-soft); cursor:pointer; border-radius:10px;
+    flex:1 1 0; display:flex; align-items:center; justify-content:center;
+    background:none; border:none; padding:8px; font-family:inherit;
+    color:var(--ink-soft); cursor:pointer; border-radius:999px;
   }
+  .bottom-nav-btn span:not(.ic){ display:none; }
   .bottom-nav-btn .ic{ font-size:20px; line-height:1; }
-  .bottom-nav-btn.active{ color:var(--indigo-deep); font-weight:700; }
-  [data-theme="dark"] .bottom-nav-btn.active{ color:var(--turmeric); }
-  /* Leave room at the bottom of the page so the fixed bar never covers
+  .bottom-nav-btn.active{ background:var(--turmeric-bg); color:var(--ledger-red); }
+  [data-theme="dark"] .bottom-nav-btn.active{ background:rgba(224,119,107,.18); color:var(--ledger-red); }
+  /* Leave room at the bottom of the page so the floating pill never covers
      the last item in a list or the last stat card. */
   main{ padding-bottom:74px; }
 }
