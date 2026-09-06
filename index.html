@@ -696,14 +696,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
   <div class="nav-backdrop" id="navBackdrop"></div>
   <button class="nav-fab" id="navFab" type="button" aria-label="Open menu" aria-controls="tabs" aria-expanded="false" title="Open menu"><span class="ic">☰</span></button>
 
-  <nav class="bottom-nav" id="bottomNav">
-    <button class="bottom-nav-btn active" data-tab="dashboard"><span class="ic">🏠</span><span data-i18n="tabDashboard">Home</span></button>
-    <button class="bottom-nav-btn" data-tab="tasks"><span class="ic">✅</span><span data-i18n="tabTasks">Tasks</span></button>
-    <button class="bottom-nav-btn" data-tab="income"><span class="ic">💰</span><span data-i18n="tabIncome">Income</span></button>
-    <button class="bottom-nav-btn" data-tab="expense"><span class="ic">🧾</span><span data-i18n="tabExpense">Expense</span></button>
-    <button class="bottom-nav-btn" data-tab="reports"><span class="ic">📊</span><span data-i18n="tabReports">Reports</span></button>
-    <button class="bottom-nav-btn" data-tab="settings"><span class="ic">⚙️</span><span data-i18n="tabSettings">Settings</span></button>
-  </nav>
+  <nav class="bottom-nav" id="bottomNav"></nav>
 
   <main>
     <!-- ================= DASHBOARD ================= -->
@@ -890,6 +883,13 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
           <input type="number" id="savingsGoalInput" min="0" placeholder="e.g. 100000" style="flex:1 1 160px;">
           <button class="btn sm" id="savingsGoalSaveBtn" onclick="saveSavingsGoalFromSettings()" data-i18n="saveGoal" style="flex:0 0 auto;">Save Goal</button>
         </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:15px; margin:0 0 6px;">📱 <span data-i18n="bottomNavCustomize">Customize Bottom Menu</span></h3>
+        <p class="lang-note" style="margin-bottom:10px;" data-i18n="bottomNavCustomizeNote">Pick up to 6 shortcuts for the floating bottom bar (mobile).</p>
+        <div id="bottomNavPicker" style="display:grid; grid-template-columns:1fr 1fr; gap:2px 12px; margin-bottom:12px;"></div>
+        <button class="btn sm" onclick="saveBottomNavPrefs()" data-i18n="save">Save</button>
       </div>
 
       <div class="card">
@@ -1121,6 +1121,8 @@ const T = {
     savingsGoal:"Savings Goal", savingsGoalPlaceholder:"e.g. 100000", saveGoal:"Save Goal",
     savingsGoalProgress:"Savings Goal Progress", goalReached:"🎉 Goal reached!", noGoalSet:"Set a savings goal in Settings to track progress here.",
     showGoalOnDashboard:"Show on Dashboard", offlineMsg:"You're offline — changes will sync when you're back online.",
+    bottomNavCustomize:"Customize Bottom Menu", bottomNavCustomizeNote:"Pick up to 6 shortcuts for the floating bottom bar (mobile).",
+    bottomNavPickNone:"Pick at least one shortcut.", bottomNavPickTooMany:"Pick at most 6 shortcuts.",
     everyDay:"Every day", everyWeekOn:"Every week on", dayOfWeek:"Day of the week",
     weekdaySun:"Sunday", weekdayMon:"Monday", weekdayTue:"Tuesday", weekdayWed:"Wednesday", weekdayThu:"Thursday", weekdayFri:"Friday", weekdaySat:"Saturday",
     tasksNoEntries:"No tasks yet", tasksNoEntriesSub:"Tap the button above to add your first task.",
@@ -1186,6 +1188,8 @@ const T = {
     savingsGoal:"சேமிப்பு இலக்கு", savingsGoalPlaceholder:"உ.ம். 100000", saveGoal:"இலக்கு சேமி",
     savingsGoalProgress:"சேமிப்பு இலக்கு முன்னேற்றம்", goalReached:"🎉 இலக்கு எட்டிவிட்டது!", noGoalSet:"இங்க progress பாக்க, Settings-ல ஒரு சேமிப்பு இலக்கை வையுங்கள்.",
     showGoalOnDashboard:"Dashboard-ல் காட்டு", offlineMsg:"நீங்கள் ஆஃப்லைனில் இருக்கிறீர்கள் — இணைப்பு திரும்பியதும் மாற்றங்கள் தானாக சேமிக்கப்படும்.",
+    bottomNavCustomize:"கீழ் மெனுவை மாற்றியமை", bottomNavCustomizeNote:"Floating bottom bar-க்கு (mobile) அதிகபட்சம் 6 shortcuts தேர்ந்தெடுக்கவும்.",
+    bottomNavPickNone:"குறைந்தது ஒரு shortcut தேர்ந்தெடுக்கவும்.", bottomNavPickTooMany:"அதிகபட்சம் 6 shortcuts மட்டும் தேர்ந்தெடுக்கவும்.",
     everyDay:"தினமும்", everyWeekOn:"ஒவ்வொரு வாரமும்", dayOfWeek:"வாரத்தின் நாள்",
     weekdaySun:"ஞாயிறு", weekdayMon:"திங்கள்", weekdayTue:"செவ்வாய்", weekdayWed:"புதன்", weekdayThu:"வியாழன்", weekdayFri:"வெள்ளி", weekdaySat:"சனி",
     tasksNoEntries:"இன்னும் பணிகள் இல்லை", tasksNoEntriesSub:"முதல் பணியை சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்.",
@@ -1404,6 +1408,12 @@ function tText(key){
   const en = (T.en && T.en[key]!==undefined) ? T.en[key] : key;
   if(ta===en) return ta;
   return lang==='ta' ? `${ta} (${en})` : `${en} (${ta})`;
+}
+// Plain single-language text (no "(other language)" suffix) — used for
+// chart axis labels/legends, where the bilingual form was too long and
+// wrapped/rotated awkwardly on narrow mobile screens.
+function tShort(key){
+  return (T[lang] && T[lang][key]!==undefined) ? T[lang][key] : key;
 }
 function biRaw(ta, en){
   if(ta===en) return ta;
@@ -2101,6 +2111,7 @@ function renderBillReminderSettings(){
   if(goalInput && document.activeElement !== goalInput) goalInput.value = getSavingsGoal() || '';
   const goalVisibleInput = document.getElementById('savingsGoalVisibleInput');
   if(goalVisibleInput) goalVisibleInput.checked = savingsGoalVisible;
+  renderBottomNavPicker();
   const billEl = document.getElementById('bill-reminder-list');
   if(billEl){
     billEl.innerHTML = EXPENSE_CATS.map(c=>{
@@ -2160,7 +2171,7 @@ function renderDashboardCharts(){
   destroyChart('ie');
   const c1 = ctxOf('chartIncomeExpense');
   if(c1) charts.ie = new Chart(c1, { type:'bar', data:{
-    labels:[tText('statIncome'), tText('statExpense')],
+    labels:[tShort('statIncome'), tShort('statExpense')],
     datasets:[{ data:[sumBy(state.income), sumBy(state.expense)], backgroundColor:[CHART_COLORS.teal, CHART_COLORS.red] }]
   }, options:{ plugins:{legend:{display:false}}, maintainAspectRatio:false, scales:{ x:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}}, y:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}} } } });
 
@@ -2169,8 +2180,8 @@ function renderDashboardCharts(){
   const incByMonth = months.map(m=> sumBy(state.income, e=>monthKey(e.date)===m));
   const expByMonth = months.map(m=> sumBy(state.expense, e=>monthKey(e.date)===m));
   if(c2) charts.me = new Chart(c2, { type:'bar', data:{ labels:monthLabels, datasets:[
-    { label:tText('statIncome'), data:incByMonth, backgroundColor:CHART_COLORS.teal },
-    { label:tText('statExpense'), data:expByMonth, backgroundColor:CHART_COLORS.red },
+    { label:tShort('statIncome'), data:incByMonth, backgroundColor:CHART_COLORS.teal },
+    { label:tShort('statExpense'), data:expByMonth, backgroundColor:CHART_COLORS.red },
   ] },
     options:{ plugins:{legend:{display:true, labels:{color:getComputedStyle(document.body).getPropertyValue('--ink')}}}, maintainAspectRatio:false, scales:{ x:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}}, y:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}} } } });
 
@@ -2179,19 +2190,19 @@ function renderDashboardCharts(){
   ['chartSavingsGrowth','chartSavingsGrowth2'].forEach((id,idx)=>{
     destroyChart('sg'+idx);
     const c = ctxOf(id);
-    if(c) charts['sg'+idx] = new Chart(c, { type:'line', data:{ labels:monthLabels, datasets:[{ label:tText('statSavings'), data:savByMonth, borderColor:CHART_COLORS.turmeric, backgroundColor:'rgba(217,154,27,0.2)', fill:true, tension:.3 }] },
+    if(c) charts['sg'+idx] = new Chart(c, { type:'line', data:{ labels:monthLabels, datasets:[{ label:tShort('statSavings'), data:savByMonth, borderColor:CHART_COLORS.turmeric, backgroundColor:'rgba(217,154,27,0.2)', fill:true, tension:.3 }] },
       options:{ plugins:{legend:{display:false}}, maintainAspectRatio:false, scales:{ x:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}}, y:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}} } } });
   });
 
   destroyChart('lb');
   const c4 = ctxOf('chartLoanBalance');
-  if(c4) charts.lb = new Chart(c4, { type:'bar', data:{ labels: state.loans.map(l=>l.name), datasets:[{ label:tText('statLoan'), data: state.loans.map(l=>l.remaining), backgroundColor:CHART_COLORS.indigo }] },
+  if(c4) charts.lb = new Chart(c4, { type:'bar', data:{ labels: state.loans.map(l=>l.name), datasets:[{ label:tShort('statLoan'), data: state.loans.map(l=>l.remaining), backgroundColor:CHART_COLORS.indigo }] },
     options:{ indexAxis:'y', plugins:{legend:{display:false}}, maintainAspectRatio:false, scales:{ x:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}}, y:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}} } } });
 
   destroyChart('int');
   const c5 = ctxOf('chartInterest');
   const intByMonth = months.map(m=> sumBy(state.expense, e=>e.category==='Interest Payment' && monthKey(e.date)===m));
-  if(c5) charts.int = new Chart(c5, { type:'bar', data:{ labels:monthLabels, datasets:[{ label:tText('interestPaid'), data:intByMonth, backgroundColor:CHART_COLORS.turmeric }] },
+  if(c5) charts.int = new Chart(c5, { type:'bar', data:{ labels:monthLabels, datasets:[{ label:tShort('interestPaid'), data:intByMonth, backgroundColor:CHART_COLORS.turmeric }] },
     options:{ plugins:{legend:{display:false}}, maintainAspectRatio:false, scales:{ x:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}}, y:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}} } } });
 }
 
@@ -2638,7 +2649,7 @@ function downloadBlob(blob, filename){
 function setLang(l){
   lang = l; document.documentElement.lang = l;
   try{ localStorage.setItem(LANG_STORAGE_KEY, l); }catch(e){ /* storage unavailable, ignore */ }
-  applyTranslations(); renderAll();
+  applyTranslations(); renderAll(); renderBottomNav();
 }
 function setTheme(th){ theme = th; document.documentElement.setAttribute('data-theme', th); }
 function applyTranslations(){
@@ -2851,6 +2862,7 @@ async function onAuthReady(user){
     await loadCustomCategoriesFromDb();
     await loadAllData();
     renderAll();
+    renderBottomNav();
     renderAccountInfo();
     openTabFromUrlHash();
     overlay.style.display = 'none';
@@ -3030,10 +3042,71 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   });
 });
 // Bottom nav (mobile): each button just clicks the matching sidebar tab so
-// all the existing per-tab render logic above runs exactly once, in one place.
-document.querySelectorAll('.bottom-nav-btn[data-tab]').forEach(btn=>{
-  btn.addEventListener('click', ()=> document.querySelector(`.tab-btn[data-tab="${btn.dataset.tab}"]`)?.click());
+// all the existing per-tab render logic above runs exactly once, in one
+// place. Delegated on the container (not per-button) because the button
+// set itself is rebuilt whenever the user customizes their bottom menu.
+document.getElementById('bottomNav')?.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.bottom-nav-btn[data-tab]');
+  if(btn) document.querySelector(`.tab-btn[data-tab="${btn.dataset.tab}"]`)?.click();
 });
+
+// The bottom pill's icon set is user-customizable (Settings → Customize
+// Bottom Menu). All available tabs, in sidebar order, for that picker and
+// for building the pill itself.
+const ALL_TABS = [
+  { key:'dashboard', icon:'🏠', labelKey:'tabDashboard' },
+  { key:'tasks',     icon:'✅', labelKey:'tabTasks' },
+  { key:'income',    icon:'💰', labelKey:'tabIncome' },
+  { key:'expense',   icon:'🧾', labelKey:'tabExpense' },
+  { key:'savings',   icon:'🐖', labelKey:'tabSavings' },
+  { key:'loans',     icon:'🏦', labelKey:'tabLoans' },
+  { key:'planner',   icon:'🎯', labelKey:'tabPlanner' },
+  { key:'budget',    icon:'📅', labelKey:'tabBudget' },
+  { key:'reports',   icon:'📊', labelKey:'tabReports' },
+  { key:'settings',  icon:'⚙️', labelKey:'tabSettings' },
+];
+const DEFAULT_BOTTOM_NAV = ['dashboard','tasks','income','expense','reports','settings'];
+const BOTTOM_NAV_MAX = 6;
+function getBottomNavPrefs(){
+  try{
+    const saved = JSON.parse(localStorage.getItem('bottomNavTabs'));
+    if(Array.isArray(saved) && saved.length) return saved.filter(k=>ALL_TABS.some(t=>t.key===k));
+  }catch(e){ /* fall through to default */ }
+  return DEFAULT_BOTTOM_NAV;
+}
+function renderBottomNav(){
+  const nav = document.getElementById('bottomNav');
+  if(!nav) return;
+  const active = document.querySelector('.tab-btn.active')?.dataset.tab || 'dashboard';
+  const prefs = getBottomNavPrefs();
+  nav.innerHTML = prefs.map(key=>{
+    const tabDef = ALL_TABS.find(t=>t.key===key);
+    if(!tabDef) return '';
+    return `<button class="bottom-nav-btn${key===active?' active':''}" data-tab="${key}"><span class="ic">${tabDef.icon}</span><span data-i18n="${tabDef.labelKey}">${tabDef.key}</span></button>`;
+  }).join('');
+}
+function renderBottomNavPicker(){
+  const el = document.getElementById('bottomNavPicker');
+  if(!el) return;
+  const prefs = getBottomNavPrefs();
+  el.innerHTML = ALL_TABS.map(tabDef=>{
+    const checked = prefs.includes(tabDef.key);
+    return `<label style="display:flex; align-items:center; gap:8px; padding:6px 0; font-size:13.5px; cursor:pointer;">
+      <input type="checkbox" class="bottom-nav-pick" value="${tabDef.key}" ${checked?'checked':''} style="width:18px;height:18px;">
+      <span>${tabDef.icon} ${t(tabDef.labelKey)}</span>
+    </label>`;
+  }).join('');
+}
+function saveBottomNavPrefs(){
+  const checked = [...document.querySelectorAll('.bottom-nav-pick:checked')].map(c=>c.value);
+  if(checked.length === 0){ toast(tText('bottomNavPickNone')); return; }
+  if(checked.length > BOTTOM_NAV_MAX){ toast(tText('bottomNavPickTooMany')); return; }
+  // Keep them in the app's canonical tab order rather than checkbox-click order.
+  const ordered = ALL_TABS.map(t=>t.key).filter(k=>checked.includes(k));
+  localStorage.setItem('bottomNavTabs', JSON.stringify(ordered));
+  renderBottomNav();
+  toast(tText('savedMsg'));
+}
 
 function renderAll(){
   renderDashboard();
@@ -3057,7 +3130,7 @@ Object.assign(window, {
   downloadBackup, restoreBackup, confirmClearAll, renderList, renderReports,
   logout, handleCatSelectChange, closeCategoryModal, saveCategory,
   openTaskModal, closeTaskModal, saveTask, askDeleteTask, toggleTaskDone,
-  saveSavingsGoalFromSettings,
+  saveSavingsGoalFromSettings, saveBottomNavPrefs,
 });
 
 // Keep the app in sync if the user logs out (or their session expires) in
