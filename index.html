@@ -107,6 +107,13 @@ button,input,select,textarea{ font-family:inherit; }
   background:linear-gradient(180deg, var(--indigo) 0%, #1A2E4D 100%); color:#F3EEDF;
 }
 [data-theme="dark"] .app-header{ background:linear-gradient(180deg, #1C2C46 0%, #0F1B2E 100%); }
+
+.offline-banner{
+  display:none; align-items:center; justify-content:center; gap:8px;
+  background:var(--turmeric-bg); color:var(--ink); border-bottom:1px solid var(--turmeric);
+  padding:8px 14px; font-size:13px; font-weight:600; text-align:center;
+}
+.offline-banner.show{ display:flex; }
 .nav-quick-row{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 12px; padding-bottom:12px; border-bottom:1.5px solid var(--line); }
 .icon-toggle{
   border:1.5px solid var(--line); background:var(--paper-deep); color:var(--ink);
@@ -664,6 +671,8 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
     </div>
   </header>
 
+  <div id="offlineBanner" class="offline-banner">📡 <span data-i18n="offlineMsg">You're offline — changes will sync when you're back online.</span></div>
+
   <!-- TABS -->
   <nav class="tabs" id="tabs">
     <button class="nav-pin-btn" id="navCollapseBtn" type="button" aria-label="Collapse menu" aria-controls="tabs" aria-expanded="true" title="Collapse menu"><span class="ic ic-desktop">«</span><span class="ic ic-mobile">✕</span></button>
@@ -872,11 +881,15 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
       </div>
 
       <div class="card">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
-          <h3 style="font-size:15px; margin:0;">🎯 <span data-i18n="savingsGoal">Savings Goal</span></h3>
-          <button class="btn sm" id="savingsGoalSaveBtn" onclick="saveSavingsGoalFromSettings()" data-i18n="saveGoal">Save Goal</button>
+        <h3 style="font-size:15px; margin:0 0 10px;">🎯 <span data-i18n="savingsGoal">Savings Goal</span></h3>
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:13.5px; cursor:pointer;">
+          <input type="checkbox" id="savingsGoalVisibleInput" style="width:18px;height:18px;">
+          <span data-i18n="showGoalOnDashboard">Show on Dashboard</span>
+        </label>
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">
+          <input type="number" id="savingsGoalInput" min="0" placeholder="e.g. 100000" style="flex:1 1 160px;">
+          <button class="btn sm" id="savingsGoalSaveBtn" onclick="saveSavingsGoalFromSettings()" data-i18n="saveGoal" style="flex:0 0 auto;">Save Goal</button>
         </div>
-        <input type="number" id="savingsGoalInput" min="0" placeholder="e.g. 100000" style="width:100%;">
       </div>
 
       <div class="card">
@@ -1099,7 +1112,7 @@ const T = {
     statIncome:"Total Income", statExpense:"Total Expense", statSavings:"Total Savings",
     statLoan:"Total Loan Balance", statBalance:"Balance (All Time)", statSavingsPct:"Savings Percentage",
     allTimeSuffix:"All Time", reportBalance:"Balance",
-    chartIncomeExpense:"Income vs Expense", chartMonthlyExpense:"Monthly Expenses",
+    chartIncomeExpense:"Income vs Expense", chartMonthlyExpense:"Monthly Income vs Expense",
     chartSavingsGrowth:"Savings Growth", chartLoanBalance:"Loan Balance",
     addIncome:"Add Income", addExpense:"Add Expense", addSavings:"Add Savings", addLoan:"Add Loan",
     addTask:"Add Task", editTask:"Edit Task", taskTitle:"Task", repeatType:"Repeats", repeatNone:"One-time", repeatDaily:"Daily", repeatWeekly:"Weekly",
@@ -1107,6 +1120,7 @@ const T = {
     dueDate:"Due Date (optional)", dueLabel:"Due", overdueLabel:"Overdue",
     savingsGoal:"Savings Goal", savingsGoalPlaceholder:"e.g. 100000", saveGoal:"Save Goal",
     savingsGoalProgress:"Savings Goal Progress", goalReached:"🎉 Goal reached!", noGoalSet:"Set a savings goal in Settings to track progress here.",
+    showGoalOnDashboard:"Show on Dashboard", offlineMsg:"You're offline — changes will sync when you're back online.",
     everyDay:"Every day", everyWeekOn:"Every week on", dayOfWeek:"Day of the week",
     weekdaySun:"Sunday", weekdayMon:"Monday", weekdayTue:"Tuesday", weekdayWed:"Wednesday", weekdayThu:"Thursday", weekdayFri:"Friday", weekdaySat:"Saturday",
     tasksNoEntries:"No tasks yet", tasksNoEntriesSub:"Tap the button above to add your first task.",
@@ -1163,7 +1177,7 @@ const T = {
     statIncome:"மொத்த வருமானம்", statExpense:"மொத்த செலவு", statSavings:"மொத்த சேமிப்பு",
     statLoan:"மொத்த கடன் இருப்பு", statBalance:"மீதி (எல்லா காலமும்)", statSavingsPct:"சேமிப்பு சதவீதம்",
     allTimeSuffix:"எல்லா காலமும்", reportBalance:"மீதி",
-    chartIncomeExpense:"வருமானம் Vs செலவு", chartMonthlyExpense:"மாதாந்திர செலவுகள்",
+    chartIncomeExpense:"வருமானம் Vs செலவு", chartMonthlyExpense:"மாதாந்திர வருமானம் Vs செலவு",
     chartSavingsGrowth:"சேமிப்பு வளர்ச்சி", chartLoanBalance:"கடன் இருப்பு",
     addIncome:"வருமானம் சேர்", addExpense:"செலவு சேர்", addSavings:"சேமிப்பு சேர்", addLoan:"கடன் சேர்",
     addTask:"பணி சேர்", editTask:"பணி திருத்து", taskTitle:"பணி", repeatType:"திரும்ப நிகழ்வு", repeatNone:"ஒருமுறை", repeatDaily:"தினமும்", repeatWeekly:"வாரந்தோறும்",
@@ -1171,6 +1185,7 @@ const T = {
     dueDate:"குறிப்பிட்ட தேதி (விருப்பம்)", dueLabel:"தேதி", overdueLabel:"தேதி தாண்டியது",
     savingsGoal:"சேமிப்பு இலக்கு", savingsGoalPlaceholder:"உ.ம். 100000", saveGoal:"இலக்கு சேமி",
     savingsGoalProgress:"சேமிப்பு இலக்கு முன்னேற்றம்", goalReached:"🎉 இலக்கு எட்டிவிட்டது!", noGoalSet:"இங்க progress பாக்க, Settings-ல ஒரு சேமிப்பு இலக்கை வையுங்கள்.",
+    showGoalOnDashboard:"Dashboard-ல் காட்டு", offlineMsg:"நீங்கள் ஆஃப்லைனில் இருக்கிறீர்கள் — இணைப்பு திரும்பியதும் மாற்றங்கள் தானாக சேமிக்கப்படும்.",
     everyDay:"தினமும்", everyWeekOn:"ஒவ்வொரு வாரமும்", dayOfWeek:"வாரத்தின் நாள்",
     weekdaySun:"ஞாயிறு", weekdayMon:"திங்கள்", weekdayTue:"செவ்வாய்", weekdayWed:"புதன்", weekdayThu:"வியாழன்", weekdayFri:"வெள்ளி", weekdaySat:"சனி",
     tasksNoEntries:"இன்னும் பணிகள் இல்லை", tasksNoEntriesSub:"முதல் பணியை சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்.",
@@ -1949,28 +1964,32 @@ function renderDashboardTasksCard(){
   `;
 }
 // Savings goal is a personal on-device target (not shared financial data),
-// so it's kept simply in localStorage rather than a new Supabase table.
-// Savings goal is stored on the profiles table (same place as pin_code),
-// so it syncs across every device the user logs into.
+// Savings goal (and whether to show it on the dashboard) is stored on the
+// profiles table (same place as pin_code), so it syncs across every device
+// the user logs into.
 let savingsGoal = 0;
+let savingsGoalVisible = true;
 async function loadSavingsGoalFromDb(){
-  if(!currentUser){ savingsGoal = 0; return; }
+  if(!currentUser){ savingsGoal = 0; savingsGoalVisible = true; return; }
   try{
-    const { data, error } = await supabase.from('profiles').select('savings_goal').eq('id', currentUser.id).maybeSingle();
+    const { data, error } = await supabase.from('profiles').select('savings_goal, savings_goal_visible').eq('id', currentUser.id).maybeSingle();
     if(error) throw error;
     savingsGoal = Number(data?.savings_goal) || 0;
-  }catch(err){ console.error(err); savingsGoal = 0; }
+    savingsGoalVisible = data?.savings_goal_visible !== false;
+  }catch(err){ console.error(err); savingsGoal = 0; savingsGoalVisible = true; }
 }
 function getSavingsGoal(){ return savingsGoal; }
 async function saveSavingsGoalFromSettings(){
   const input = document.getElementById('savingsGoalInput');
+  const visible = document.getElementById('savingsGoalVisibleInput').checked;
   const goal = Math.max(0, Number(input.value)||0);
   const btn = document.getElementById('savingsGoalSaveBtn');
   if(btn) btn.disabled = true;
   try{
-    const { error } = await supabase.from('profiles').update({ savings_goal: goal }).eq('id', currentUser.id);
+    const { error } = await supabase.from('profiles').update({ savings_goal: goal, savings_goal_visible: visible }).eq('id', currentUser.id);
     if(error) throw error;
     savingsGoal = goal;
+    savingsGoalVisible = visible;
     toast(tText('savedMsg'));
     renderSavingsGoalCard(sumBy(state.savings));
   }catch(err){
@@ -1984,6 +2003,7 @@ const SAVINGS_MILESTONES = [25, 50, 75, 100];
 function renderSavingsGoalCard(totalSavings){
   const el = document.getElementById('dashSavingsGoal');
   if(!el) return;
+  if(!savingsGoalVisible){ el.innerHTML = ''; return; }
   const goal = getSavingsGoal();
   if(goal <= 0){
     el.innerHTML = `<div class="card plain" style="padding:14px 16px; margin-bottom:14px; color:var(--ink-soft); font-size:13.5px;">🎯 ${t('noGoalSet')}</div>`;
@@ -2079,6 +2099,8 @@ async function saveReminderCats(){
 function renderBillReminderSettings(){
   const goalInput = document.getElementById('savingsGoalInput');
   if(goalInput && document.activeElement !== goalInput) goalInput.value = getSavingsGoal() || '';
+  const goalVisibleInput = document.getElementById('savingsGoalVisibleInput');
+  if(goalVisibleInput) goalVisibleInput.checked = savingsGoalVisible;
   const billEl = document.getElementById('bill-reminder-list');
   if(billEl){
     billEl.innerHTML = EXPENSE_CATS.map(c=>{
@@ -2137,16 +2159,20 @@ function renderDashboardCharts(){
 
   destroyChart('ie');
   const c1 = ctxOf('chartIncomeExpense');
-  if(c1) charts.ie = new Chart(c1, { type:'doughnut', data:{
+  if(c1) charts.ie = new Chart(c1, { type:'bar', data:{
     labels:[tText('statIncome'), tText('statExpense')],
     datasets:[{ data:[sumBy(state.income), sumBy(state.expense)], backgroundColor:[CHART_COLORS.teal, CHART_COLORS.red] }]
-  }, options:{ plugins:{legend:{position:'bottom', labels:{color:getComputedStyle(document.body).getPropertyValue('--ink')}}}, maintainAspectRatio:false } });
+  }, options:{ plugins:{legend:{display:false}}, maintainAspectRatio:false, scales:{ x:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}}, y:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}} } } });
 
   destroyChart('me');
   const c2 = ctxOf('chartMonthlyExpense');
+  const incByMonth = months.map(m=> sumBy(state.income, e=>monthKey(e.date)===m));
   const expByMonth = months.map(m=> sumBy(state.expense, e=>monthKey(e.date)===m));
-  if(c2) charts.me = new Chart(c2, { type:'bar', data:{ labels:monthLabels, datasets:[{ label:tText('statExpense'), data:expByMonth, backgroundColor:CHART_COLORS.red }] },
-    options:{ plugins:{legend:{display:false}}, maintainAspectRatio:false, scales:{ x:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}}, y:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}} } } });
+  if(c2) charts.me = new Chart(c2, { type:'bar', data:{ labels:monthLabels, datasets:[
+    { label:tText('statIncome'), data:incByMonth, backgroundColor:CHART_COLORS.teal },
+    { label:tText('statExpense'), data:expByMonth, backgroundColor:CHART_COLORS.red },
+  ] },
+    options:{ plugins:{legend:{display:true, labels:{color:getComputedStyle(document.body).getPropertyValue('--ink')}}}, maintainAspectRatio:false, scales:{ x:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}}, y:{ticks:{color:getComputedStyle(document.body).getPropertyValue('--ink-soft')}} } } });
 
   let running = 0;
   const savByMonth = months.map(m=>{ running += sumBy(state.savings, e=>monthKey(e.date)===m); return running; });
@@ -2475,7 +2501,7 @@ function todaysRelevantTasks(){
   return state.tasks.filter(t=>
     t.repeat==='daily' ||
     (t.repeat==='weekly' && Number(t.weekday)===dow) ||
-    (t.repeat==='none' && (!t.date || t.date <= todayISO()))
+    (t.repeat==='none' && (!t.date || t.date === todayISO()))
   );
 }
 function renderTasks(){
@@ -3068,6 +3094,15 @@ async function init(){
     overlay.appendChild(retryBtn);
   }
 }
+// Offline banner: shown whenever the browser loses network connectivity,
+// hidden again the moment it's back — a visual cue that entries made now
+// are safe locally but the Supabase sync will resume once online.
+function updateOfflineBanner(){
+  document.getElementById('offlineBanner')?.classList.toggle('show', !navigator.onLine);
+}
+window.addEventListener('online', updateOfflineBanner);
+window.addEventListener('offline', updateOfflineBanner);
+updateOfflineBanner();
 init();
 </script>
 
