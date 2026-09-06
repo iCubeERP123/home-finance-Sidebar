@@ -512,6 +512,12 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 @keyframes checkbox-pop{ 0%{ transform:scale(1); } 45%{ transform:scale(1.35); } 100%{ transform:scale(1); } }
 
 .chart-wrap{ position:relative; height:230px; margin-top:6px; }
+.chart-wrap.chart-clickable{ cursor:pointer; border-radius:10px; transition:background .15s ease; }
+.chart-wrap.chart-clickable:hover{ background:var(--paper-deep); }
+.chart-wrap.chart-clickable::after{
+  content:"⛶"; position:absolute; top:4px; right:6px; font-size:15px;
+  color:var(--ink-soft); opacity:.55; pointer-events:none;
+}
 .chart-wrap.tall{ height:280px; }
 
 .notif-item{
@@ -712,21 +718,21 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
       <div class="grid cols-2" style="margin-top:14px;">
         <div class="card">
           <h3 style="font-size:15px; margin-bottom:8px;" data-i18n="chartIncomeExpense">Income vs Expense</h3>
-          <div class="chart-wrap"><canvas id="chartIncomeExpense"></canvas></div>
+          <div class="chart-wrap chart-clickable" onclick="openChartModal('ie')"><canvas id="chartIncomeExpense"></canvas></div>
         </div>
         <div class="card">
           <h3 style="font-size:15px; margin-bottom:8px;" data-i18n="chartMonthlyExpense">Monthly Expenses</h3>
-          <div class="chart-wrap"><canvas id="chartMonthlyExpense"></canvas></div>
+          <div class="chart-wrap chart-clickable" onclick="openChartModal('me')"><canvas id="chartMonthlyExpense"></canvas></div>
         </div>
       </div>
       <div class="grid cols-2" style="margin-top:0;">
         <div class="card">
           <h3 style="font-size:15px; margin-bottom:8px;" data-i18n="chartSavingsGrowth">Savings Growth</h3>
-          <div class="chart-wrap"><canvas id="chartSavingsGrowth"></canvas></div>
+          <div class="chart-wrap chart-clickable" onclick="openChartModal('sg0')"><canvas id="chartSavingsGrowth"></canvas></div>
         </div>
         <div class="card">
           <h3 style="font-size:15px; margin-bottom:8px;" data-i18n="chartLoanBalance">Loan Balance</h3>
-          <div class="chart-wrap"><canvas id="chartLoanBalance"></canvas></div>
+          <div class="chart-wrap chart-clickable" onclick="openChartModal('lb')"><canvas id="chartLoanBalance"></canvas></div>
         </div>
       </div>
     </section>
@@ -783,7 +789,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
       </div>
       <div class="card">
         <h3 style="font-size:15px; margin-bottom:8px;" data-i18n="chartSavingsGrowth">Savings Growth</h3>
-        <div class="chart-wrap"><canvas id="chartSavingsGrowth2"></canvas></div>
+        <div class="chart-wrap chart-clickable" onclick="openChartModal('sg1')"><canvas id="chartSavingsGrowth2"></canvas></div>
       </div>
       <div class="filter-chips" id="savings-filters"></div>
       <div id="savings-list"></div>
@@ -808,7 +814,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
       </div>
       <div class="card">
         <h3 style="font-size:15px; margin-bottom:8px;" data-i18n="interestPaidByMonth">Interest Paid by Month</h3>
-        <div class="chart-wrap"><canvas id="chartInterest"></canvas></div>
+        <div class="chart-wrap chart-clickable" onclick="openChartModal('int')"><canvas id="chartInterest"></canvas></div>
       </div>
     </section>
 
@@ -1007,6 +1013,17 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
   </div>
 </div>
 
+<!-- CHART FULL VIEW MODAL -->
+<div class="modal-backdrop" id="chartModalBackdrop">
+  <div class="modal" style="max-width:720px; width:94vw;">
+    <h3 id="chartModalTitle" style="margin-bottom:12px;"></h3>
+    <div class="chart-wrap" style="height:60vh;"><canvas id="chartModalCanvas"></canvas></div>
+    <div class="actions">
+      <button class="btn ghost" onclick="closeChartModal()" data-i18n="closeBtn">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- CONFIRM MODAL -->
 <div class="modal-backdrop" id="confirmModalBackdrop">
   <div class="modal">
@@ -1127,7 +1144,7 @@ const T = {
     weekdaySun:"Sunday", weekdayMon:"Monday", weekdayTue:"Tuesday", weekdayWed:"Wednesday", weekdayThu:"Thursday", weekdayFri:"Friday", weekdaySat:"Saturday",
     tasksNoEntries:"No tasks yet", tasksNoEntriesSub:"Tap the button above to add your first task.",
     date:"Date", category:"Category", amount:"Amount (₹)", notes:"Notes (optional)",
-    save:"Save", cancelBtn:"Cancel", edit:"", delete:"",
+    save:"Save", cancelBtn:"Cancel", edit:"", delete:"", closeBtn:"Close",
     noEntries:"No entries yet", noEntriesSub:"Tap the button above to add your first one.",
     filterToday:"Today", filterWeek:"This Week", filterMonth:"This Month", filterYear:"This Year", filterAll:"All",
     interestTracking:"Interest Payment Tracking", interestMonthly:"Monthly Interest",
@@ -1194,7 +1211,7 @@ const T = {
     weekdaySun:"ஞாயிறு", weekdayMon:"திங்கள்", weekdayTue:"செவ்வாய்", weekdayWed:"புதன்", weekdayThu:"வியாழன்", weekdayFri:"வெள்ளி", weekdaySat:"சனி",
     tasksNoEntries:"இன்னும் பணிகள் இல்லை", tasksNoEntriesSub:"முதல் பணியை சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்.",
     date:"தேதி", category:"வகை", amount:"தொகை (₹)", notes:"குறிப்பு (விருப்பம்)",
-    save:"சேமி", cancelBtn:"ரத்து செய்", edit:"", delete:"",
+    save:"சேமி", cancelBtn:"ரத்து செய்", edit:"", delete:"", closeBtn:"மூடு",
     noEntries:"இன்னும் பதிவுகள் இல்லை", noEntriesSub:"முதல் பதிவைச் சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்.",
     filterToday:"இன்று", filterWeek:"இந்த வாரம்", filterMonth:"இந்த மாதம்", filterYear:"இந்த ஆண்டு", filterAll:"அனைத்தும்",
     interestTracking:"வட்டி செலுத்துதல் கண்காணிப்பு", interestMonthly:"மாதாந்திர வட்டி",
@@ -2151,6 +2168,27 @@ async function toggleReminderCat(kind, catEn, on){
 let charts = {};
 function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
 function ctxOf(id){ const el = document.getElementById(id); return el ? el.getContext('2d') : null; }
+// Maps a chart's registry key (used in `charts{}`) to its title translation
+// key, for the tap-to-expand full-view modal.
+const CHART_TITLE_KEYS = {
+  ie:'chartIncomeExpense', me:'chartMonthlyExpense', sg0:'chartSavingsGrowth',
+  sg1:'chartSavingsGrowth', lb:'chartLoanBalance', int:'interestPaidByMonth',
+};
+let modalChart = null;
+function openChartModal(key){
+  const src = charts[key];
+  if(!src) return;
+  document.getElementById('chartModalTitle').textContent = tText(CHART_TITLE_KEYS[key] || '');
+  if(modalChart) modalChart.destroy();
+  const ctx = document.getElementById('chartModalCanvas').getContext('2d');
+  const clonedData = typeof structuredClone === 'function' ? structuredClone(src.config.data) : JSON.parse(JSON.stringify(src.config.data));
+  modalChart = new Chart(ctx, { type:src.config.type, data:clonedData, options:{ ...src.config.options, maintainAspectRatio:false } });
+  document.getElementById('chartModalBackdrop').classList.add('show');
+}
+function closeChartModal(){
+  document.getElementById('chartModalBackdrop').classList.remove('show');
+  if(modalChart){ modalChart.destroy(); modalChart = null; }
+}
 const CHART_COLORS = { teal:'#2F7A64', red:'#B23A2E', indigo:'#2B4570', turmeric:'#D99A1B', line:'#7A6A52' };
 
 function last6Months(){
@@ -3130,7 +3168,7 @@ Object.assign(window, {
   downloadBackup, restoreBackup, confirmClearAll, renderList, renderReports,
   logout, handleCatSelectChange, closeCategoryModal, saveCategory,
   openTaskModal, closeTaskModal, saveTask, askDeleteTask, toggleTaskDone,
-  saveSavingsGoalFromSettings, saveBottomNavPrefs,
+  saveSavingsGoalFromSettings, saveBottomNavPrefs, openChartModal, closeChartModal,
 });
 
 // Keep the app in sync if the user logs out (or their session expires) in
