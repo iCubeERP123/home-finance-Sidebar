@@ -1249,6 +1249,8 @@ const T = {
     expectedIncome:"எதிர்பார்க்கும் வருமானம் (₹)", expectedExpense:"எதிர்பார்க்கும் செலவு (₹)", expectedSavings:"எதிர்பார்க்கும் சேமிப்பு (₹)",
     month:"மாதம்", actual:"நடப்பு", expected:"எதிர்பார்ப்பு", statusSafe:"பாதுகாப்பு", statusWarning:"எச்சரிக்கை", statusOver:"பட்ஜெட் மீறல்",
     languageTheme:"மொழி & தோற்றம்", englishBtn:"English", tamilBtn:"தமிழ்", lightMode:"☀️ லைட்", darkMode:"🌙 டார்க்",
+    changePassword:"கடவுச்சொல்லை மாற்று", changePasswordNote:"உங்கள் கணக்குக்கு இப்போதே ஒரு புதிய கடவுச்சொல்லை அமைக்கவும் — நீங்கள் ஏற்கனவே sign in ஆகியிருப்பதால் email code தேவையில்லை.",
+    currentPassword:"தற்போதைய கடவுச்சொல்", newPassword:"புதிய கடவுச்சொல்", confirmNewPassword:"புதிய கடவுச்சொல்லை உறுதிப்படுத்து", updatePassword:"கடவுச்சொல்லை புதுப்பி",
     security:"பாதுகாப்பு", securityNote:"உங்கள் கணக்கில் சேமிக்கப்பட்ட PIN பூட்டு. இந்த ஆப்பை எந்த சாதனத்தில் திறந்தாலும் ஒவ்வொரு முறையும் இது கேட்கப்படும்.",
     setPasscode:"பாஸ்கோட் அமை", enableLock:"பூட்டை இயக்கு", disableLock:"பூட்டை நிறுத்து", lockNow:"இப்போது பூட்டு",
     billReminders:"பில் நினைவூட்டல்கள்", billRemindersNote:"ஒவ்வொரு மாதமும் செலுத்தப்படாவிட்டால் எந்த செலவு வகைகள் உங்களுக்கு நினைவூட்ட வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும்.",
@@ -1273,64 +1275,6 @@ const T = {
     otpSent:"OTP குறியீடு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டது.", passwordReset:"கடவுச்சொல் மீட்டமைக்கப்பட்டது. நீங்கள் உள்நுழைந்துவிட்டீர்கள்.",
     loadingLedger:"உங்கள் கணக்கு ஏற்றப்படுகிறது…",
   },
-  hi: {
-    appTitle: "होम फाइनेंस",appTagline: "पैसा, आसान तरीके से",
-    tabDashboard:"होम", tabIncome:"आय", tabExpense:"खर्च", tabSavings:"बचत", tabTasks:"कार्य", moreMenu:"और",
-    tabLoans:"ऋण", tabPlanner:"ऋण योजना", tabBudget:"बजट", tabReports:"रिपोर्ट", tabSettings:"सेटिंग्स",
-    theme:"थीम", dashTitle:"सारांश",
-    statIncome:"कुल आय", statExpense:"कुल खर्च", statSavings:"कुल बचत",
-    statLoan:"कुल ऋण शेष", statBalance:"शेष (हर समय)", statSavingsPct:"बचत प्रतिशत",
-    allTimeSuffix:"हर समय", reportBalance:"शेष",
-    chartIncomeExpense:"आय बनाम खर्च", chartMonthlyExpense:"मासिक खर्च",
-    chartSavingsGrowth:"बचत वृद्धि", chartLoanBalance:"ऋण शेष",
-    addIncome:"आय जोड़ें", addExpense:"खर्च जोड़ें", addSavings:"बचत जोड़ें", addLoan:"ऋण जोड़ें",
-    addTask:"कार्य जोड़ें", editTask:"कार्य संपादित करें", taskTitle:"कार्य", repeatType:"दोहराव", repeatNone:"एक बार", repeatDaily:"रोज़ाना", repeatWeekly:"साप्ताहिक",
-    todaysTasks:"आज के कार्य", tasksPendingToday:"आज बाकी", allTasksDoneToday:"आज के सभी कार्य पूरे हो गए! 🎉", viewAllTasks:"सभी देखें",
-    dueDate:"नियत तारीख (वैकल्पिक)", dueLabel:"तारीख", overdueLabel:"समय सीमा बीत गई",
-    everyDay:"हर दिन", everyWeekOn:"हर हफ्ते", dayOfWeek:"सप्ताह का दिन",
-    weekdaySun:"रविवार", weekdayMon:"सोमवार", weekdayTue:"मंगलवार", weekdayWed:"बुधवार", weekdayThu:"गुरुवार", weekdayFri:"शुक्रवार", weekdaySat:"शनिवार",
-    tasksNoEntries:"अभी तक कोई कार्य नहीं", tasksNoEntriesSub:"अपना पहला कार्य जोड़ने के लिए ऊपर दिए बटन को दबाएं।",
-    date:"तारीख", category:"श्रेणी", amount:"राशि (₹)", notes:"टिप्पणी (वैकल्पिक)",
-    save:"सेव करें", cancelBtn:"रद्द करें", edit:"", delete:"",
-    noEntries:"अभी तक कोई प्रविष्टि नहीं", noEntriesSub:"अपनी पहली प्रविष्टि जोड़ने के लिए ऊपर दिए बटन को दबाएं।",
-    filterToday:"आज", filterWeek:"इस सप्ताह", filterMonth:"इस महीने", filterYear:"इस साल", filterAll:"सभी",
-    interestTracking:"ब्याज भुगतान ट्रैकिंग", interestMonthly:"मासिक ब्याज",
-    interestPaid:"चुकाया गया ब्याज", interestRemaining:"शेष ब्याज", interestPaidByMonth:"महीने के अनुसार चुकाया गया ब्याज",
-    loanName:"ऋण का नाम", loanType:"ऋण प्रकार", loanAmount:"ऋण राशि (₹)", interestRate:"ब्याज दर (% प्रति वर्ष)",
-    emi:"EMI (₹ / महीना)", startDate:"शुरुआत तारीख", endDate:"समाप्ति तारीख (अनुमानित)", remaining:"शेष राशि (₹)",
-    plannerTitle:"ऋण मुक्ति योजना",
-    plannerSub:"अपने ऋण का विवरण डालें और कर्ज़-मुक्त होने का सबसे बेहतर तरीका जानें।",
-    monthlyPayment:"मासिक भुगतान (₹)", extraPayment:"अतिरिक्त भुगतान / महीना (₹)", calculate:"योजना की गणना करें",
-    resultMonths:"पूरा होने में महीने", resultInterest:"कुल चुकाया गया ब्याज", resultDate:"अनुमानित समाप्ति तारीख",
-    resultSaved:"अतिरिक्त भुगतान से बचे महीने", plannerWarn:"यह राशि ऋण को कभी नहीं चुका पाएगी — मासिक या अतिरिक्त भुगतान बढ़ाएं।",
-    budgetTitle:"मासिक बजट योजना", setBudget:"बजट सेट करें",
-    expectedIncome:"अनुमानित आय (₹)", expectedExpense:"अनुमानित खर्च (₹)", expectedSavings:"अनुमानित बचत (₹)",
-    month:"महीना", actual:"वास्तविक", expected:"अनुमानित", statusSafe:"सुरक्षित", statusWarning:"चेतावनी", statusOver:"बजट से अधिक",
-    languageTheme:"भाषा और रूप", englishBtn:"English", tamilBtn:"தமிழ்", lightMode:"☀️ लाइट", darkMode:"🌙 डार्क",
-    security:"सुरक्षा", securityNote:"आपके खाते में सेव किया गया PIN लॉक। इस या किसी भी डिवाइस पर ऐप खोलने पर हर बार यह पूछा जाएगा।",
-    setPasscode:"पासकोड सेट करें", enableLock:"लॉक चालू करें", disableLock:"लॉक बंद करें", lockNow:"अभी लॉक करें",
-    billReminders:"बिल रिमाइंडर", billRemindersNote:"चुनें कि हर महीने भुगतान न होने पर कौन-सी खर्च श्रेणियां आपको याद दिलाएं।",
-    savingsReminders:"बचत रिमाइंडर", savingsRemindersNote:"चुनें कि हर महीने न जोड़े जाने पर कौन-सी बचत श्रेणियां आपको याद दिलाएं।",
-    backupRestore:"बैकअप और रीस्टोर", backupNote:"आपका डेटा अपने आप आपके Supabase डेटाबेस में सेव हो जाता है। एक अतिरिक्त ऑफलाइन कॉपी के लिए या JSON फ़ाइल से डेटा लोड करने के लिए इन बटनों का उपयोग करें।",
-    downloadBackup:"बैकअप डाउनलोड करें", restoreBackup:"बैकअप रीस्टोर करें", dangerZone:"खतरे का क्षेत्र", clearAll:"सारा डेटा मिटाएं",
-    footerText:"परिवारों के लिए, तमिल और अंग्रेज़ी में 🪔",
-    lockTitle:"पासकोड डालें", lockSub:"आपके खाते के लिए PIN लॉक।", unlock:"अनलॉक करें", lockWrong:"गलत पासकोड। फिर से कोशिश करें।",
-    confirmTitle:"क्या आप निश्चित हैं?", confirmYes:"हां, हटाएं", confirmDeleteBody:"यह प्रविष्टि डेटाबेस से हमेशा के लिए हटा दी जाएगी।",
-    confirmClearBody:"इससे आपकी सारी आय, खर्च, बचत, ऋण और बजट का डेटा डेटाबेस से हमेशा के लिए मिट जाएगा। इसे वापस नहीं लाया जा सकता। पहले बैकअप डाउनलोड करने पर विचार करें।",
-    savedMsg:"सेव हो गया!", deletedMsg:"हटा दिया गया।", clearedMsg:"सारा डेटा मिटा दिया गया।", backupDownloaded:"बैकअप डाउनलोड हो गया।",
-    backupRestored:"बैकअप रीस्टोर हो गया।", backupError:"वह बैकअप फ़ाइल पढ़ी नहीं जा सकी।", lockEnabled:"पासकोड लॉक चालू करके अभी लागू कर दिया गया।",
-    lockDisabled:"पासकोड लॉक बंद कर दिया गया।", enterPasscode:"पहले एक पासकोड डालें।", noPasscodeSet:"अभी तक कोई पासकोड सेट नहीं है।",
-    notifEmi:"EMI रिमाइंडर", notifEmiBody:"इस महीने देना बाकी है",
-    notifBill:"बिल रिमाइंडर", notifBillBody:"इस महीने अभी तक दर्ज नहीं किया गया",
-    notifSavings:"बचत रिमाइंडर", notifSavingsBody:"इस महीने अभी तक जोड़ा नहीं गया",
-    notifSavingsGoal:"बचत लक्ष्य रिमाइंडर", notifSavingsGoalBody:"आप इस महीने के बचत लक्ष्य से अभी भी पीछे हैं",
-    reportsSearch:"रिपोर्ट में खोजें", noResults:"कोई मिलती-जुलती प्रविष्टि नहीं", searchPH:"श्रेणी, टिप्पणी या राशि से खोजें",
-    fillRequired:"कृपया सभी आवश्यक फ़ील्ड सही तरीके से भरें।",
-    loadError:"डेटाबेस से डेटा लोड नहीं हो सका। अपना कनेक्शन जांचें और फिर से लोड करें।",
-    saveError:"सेव नहीं हो सका। फिर से कोशिश करें।", deleteError:"हटाया नहीं जा सका। फिर से कोशिश करें।", titleRequired:"कृपया कार्य का नाम डालें।",
-    otpSent:"OTP कोड आपके ईमेल पर भेज दिया गया है।", passwordReset:"पासवर्ड रीसेट हो गया। आप लॉग इन हो चुके हैं।",
-    loadingLedger:"आपका लेजर लोड हो रहा है…",
-  }
 };
 
 /* ---------------------------- Categories (bilingual) ---------------------------- */
@@ -1388,12 +1332,11 @@ const LANG_STORAGE_KEY = "hfl_lang_v1";
 function detectDefaultLang(){
   try{
     const saved = localStorage.getItem(LANG_STORAGE_KEY);
-    if(saved === 'ta' || saved === 'en' || saved === 'hi') return saved;
+    if(saved === 'ta' || saved === 'en') return saved;
   } catch(e){ /* storage unavailable, fall through to detection */ }
   const browserLangs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || ''];
   for(const l of browserLangs){
     const code = (l||'').toLowerCase();
-    if(code.startsWith('hi')) return 'hi';
     if(code.startsWith('ta')) return 'ta';
     if(code.startsWith('en')) return 'en';
   }
@@ -2832,11 +2775,11 @@ function applyTranslations(){
     const key = el.getAttribute('data-i18n');
     el.innerHTML = t(key);
   });
-  document.getElementById('langToggleLabel').textContent = lang==='ta' ? 'தமிழ்' : (lang==='hi' ? 'हिंदी' : 'EN');
+  document.getElementById('langToggleLabel').textContent = lang==='ta' ? 'தமிழ்' : 'EN';
   document.querySelectorAll('.search-input').forEach(el=> el.placeholder = tText('searchPH'));
   renderBillReminderSettings();
 }
-document.getElementById('langToggle')?.addEventListener('click', ()=> setLang(lang==='ta'?'en':(lang==='en'?'hi':'ta')));
+document.getElementById('langToggle')?.addEventListener('click', ()=> setLang(lang==='ta'?'en':'ta'));
 document.getElementById('themeToggle')?.addEventListener('click', ()=> setTheme(theme==='light'?'dark':'light'));
 document.getElementById('headerLockBtn')?.addEventListener('click', ()=>{
   if(!passcode){
