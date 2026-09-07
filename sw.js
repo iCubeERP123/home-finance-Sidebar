@@ -40,19 +40,32 @@ self.addEventListener("fetch", (event) => {
   // cross-origin requests (fonts, CDNs, etc.) normally.
   if (url.origin !== self.location.origin) return;
 
-  // App shell: cache-first, falling back to network, with a safe fallback
-  // if the network is unavailable so a failed fetch never rejects unhandled.
+  // Page navigations: network-first. This is the one request type that
+  // changes every time you redeploy index.html, so we always try to get
+  // the freshest copy first and only fall back to the cached shell when
+  // the network is unreachable (offline). Cache-first here would mean
+  // every future edit to index.html stays invisible to returning users
+  // until the CACHE_NAME below is bumped.
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          // Keep the cached shell fresh with whatever we just fetched.
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return res;
+        })
+        .catch(() => caches.match(event.request).then((c) => c || caches.match("./index.html")))
+    );
+    return;
+  }
+
+  // Everything else (icons, manifest.json): cache-first, since these
+  // rarely change and cache-first means near-instant repeat loads.
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
-      return fetch(event.request).catch(() => {
-        // Offline and not cached — fall back to the cached shell page for
-        // navigations; for other assets there's nothing sensible to return.
-        if (event.request.mode === "navigate") {
-          return caches.match("./index.html");
-        }
-        return new Response("", { status: 504, statusText: "Offline" });
-      });
+      return fetch(event.request).catch(() => new Response("", { status: 504, statusText: "Offline" }));
     })
   );
 });
