@@ -1334,18 +1334,28 @@ const T = {
 };
 
 /* ---------------------------- Categories (bilingual) ---------------------------- */
-const INCOME_CATS = [
+// These used to be the hardcoded, unchangeable Income/Expense category
+// lists. They're now only the *seed* set: on first login (or the first
+// login after this change), loadCustomCategoriesFromDb() copies whichever
+// of these a user doesn't already have into their own custom_categories
+// rows, so every one becomes editable/deletable from Settings → Manage
+// Categories, same as any category the user adds themselves.
+const DEFAULT_INCOME_CATS = [
   {en:"Salary", ta:"சம்பளம்"}, {en:"Father Income", ta:"தந்தை வருமானம்"}, {en:"Mother Income", ta:"தாய் வருமானம்"},
   {en:"Relative Support", ta:"உறவினர் உதவி"}, {en:"Business Income", ta:"வணிக வருமானம்"}, {en:"Freelance Income", ta:"சுயதொழில் வருமானம்"},
   {en:"Rental Income", ta:"வாடகை வருமானம்"}, {en:"Agriculture Income", ta:"விவசாய வருமானம்"}, {en:"Pension", ta:"ஓய்வூதியம்"},
   {en:"Other Income", ta:"பிற வருமானம்"},
 ];
-const EXPENSE_CATS = [
+const DEFAULT_EXPENSE_CATS = [
   {en:"Food", ta:"உணவு"}, {en:"House Rent", ta:"வீட்டு வாடகை"}, {en:"EB Bill", ta:"மின்சார பில்"}, {en:"Water Bill", ta:"தண்ணீர் பில்"},
   {en:"Internet", ta:"இணையம்"}, {en:"Mobile Recharge", ta:"மொபைல் ரீசார்ஜ்"}, {en:"Petrol", ta:"பெட்ரோல்"}, {en:"School Fees", ta:"பள்ளி கட்டணம்"},
   {en:"Medical", ta:"மருத்துவம்"}, {en:"Shopping", ta:"கடைவீதி"}, {en:"Festival", ta:"பண்டிகை"}, {en:"Travel", ta:"பயணம்"},
   {en:"EMI", ta:"தவணை (EMI)"}, {en:"Interest Payment", ta:"வட்டி செலுத்துதல்"}, {en:"Other Expenses", ta:"பிற செலவுகள்"},
 ];
+// Populated entirely from Supabase (loadCustomCategoriesFromDb) — starts
+// empty on every page load.
+const INCOME_CATS = [];
+const EXPENSE_CATS = [];
 const SAVINGS_TYPES = [
   {en:"Bank Savings", ta:"வங்கி சேமிப்பு"}, {en:"Cash Savings", ta:"பண சேமிப்பு"}, {en:"Gold Savings", ta:"தங்க சேமிப்பு"},
   {en:"Chit Fund", ta:"சீட்டு நிதி"}, {en:"Fixed Deposit", ta:"நிலை வைப்பு (FD)"}, {en:"Recurring Deposit", ta:"தொடர் வைப்பு (RD)"},
@@ -1362,7 +1372,7 @@ const LOAN_TYPES = [
 // dropdowns, labels, reminder settings, reports — picks them up for free.
 const CATEGORY_LISTS = { income:INCOME_CATS, expense:EXPENSE_CATS, savings:SAVINGS_TYPES, loans:LOAN_TYPES };
 const CATEGORY_BASE_LEN = {
-  income: INCOME_CATS.length, expense: EXPENSE_CATS.length,
+  income: 0, expense: 0,
   savings: SAVINGS_TYPES.length, loans: LOAN_TYPES.length,
 };
 const DEFAULT_RECURRING_BILL_CATS = ["EB Bill","Water Bill","Internet","Mobile Recharge"];
@@ -1900,7 +1910,26 @@ async function loadCustomCategoriesFromDb(){
       const list = CATEGORY_LISTS[row.kind];
       if(list && !list.some(c=>c.en===row.name_en)) list.push({ id: row.id, en: row.name_en, ta: row.name_ta });
     });
+    // One-time migration: seed whichever of the app's default Income/Expense
+    // categories this account doesn't already have as its own row yet.
+    // Matched by name, so it's safe to run on every login — already-seeded
+    // categories (or ones the user renamed away from) are never duplicated.
+    const incomeNames = new Set((data||[]).filter(r=>r.kind==='income').map(r=>r.name_en));
+    const expenseNames = new Set((data||[]).filter(r=>r.kind==='expense').map(r=>r.name_en));
+    await seedMissingDefaultCategories('income', DEFAULT_INCOME_CATS, incomeNames);
+    await seedMissingDefaultCategories('expense', DEFAULT_EXPENSE_CATS, expenseNames);
   }catch(err){ console.error(err); }
+}
+async function seedMissingDefaultCategories(kind, defaults, existingNames){
+  const missing = defaults.filter(c=>!existingNames.has(c.en));
+  if(missing.length===0) return;
+  try{
+    const rows = missing.map(c=>({ user_id: currentUser.id, kind, name_en: c.en, name_ta: c.ta }));
+    const { data, error } = await supabase.from('custom_categories').insert(rows).select();
+    if(error) throw error;
+    const list = CATEGORY_LISTS[kind];
+    (data||[]).forEach(row=>{ if(!list.some(c=>c.en===row.name_en)) list.push({ id: row.id, en: row.name_en, ta: row.name_ta }); });
+  }catch(err){ console.error('Failed to seed default categories for', kind, err); }
 }
 
 function openEntryModal(moduleKey, editId){
