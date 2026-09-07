@@ -898,6 +898,16 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
       </div>
 
       <div class="card">
+        <h3 style="font-size:15px; margin:0 0 6px;">🏷️ <span data-i18n="manageCategories">Manage Categories</span></h3>
+        <p class="lang-note" style="margin-bottom:10px;" data-i18n="manageCategoriesNote">Edit or delete the custom categories you've added for Income and Expense. Built-in categories can't be changed here.</p>
+        <div class="settings-actions" style="margin-bottom:10px;">
+          <button class="btn sm" id="catMgrTabIncome" onclick="switchCategoryManagerKind('income')" data-i18n="tabIncome">Income</button>
+          <button class="btn sm ghost" id="catMgrTabExpense" onclick="switchCategoryManagerKind('expense')" data-i18n="tabExpense">Expense</button>
+        </div>
+        <div id="categoryManagerList"></div>
+      </div>
+
+      <div class="card">
         <h3 style="font-size:15px; margin:0 0 6px;">📱 <span data-i18n="bottomNavCustomize">Customize Bottom Menu</span></h3>
         <p class="lang-note" style="margin-bottom:10px;" data-i18n="bottomNavCustomizeNote">Pick up to 6 shortcuts for the floating bottom bar (mobile).</p>
         <div id="bottomNavPicker" style="display:grid; grid-template-columns:1fr 1fr; gap:2px 12px; margin-bottom:12px;"></div>
@@ -973,7 +983,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 <!-- CATEGORY MODAL (add a new category, saved to Supabase) -->
 <div class="modal-backdrop" id="categoryModalBackdrop">
   <div class="modal">
-    <h3>புதிய வகை சேர் (Add New Category)</h3>
+    <h3 id="categoryModalTitle">புதிய வகை சேர் (Add New Category)</h3>
     <div class="field-row"><label class="field">தமிழ் பெயர் (Tamil Name)</label><input type="text" id="cat-modal-ta" placeholder="எ.கா. உணவு"></div>
     <div class="field-row"><label class="field">English Name</label><input type="text" id="cat-modal-en" placeholder="e.g. Food"></div>
     <div class="actions">
@@ -1151,6 +1161,9 @@ const T = {
     tasksNoEntries:"No tasks yet", tasksNoEntriesSub:"Tap the button above to add your first task.",
     date:"Date", category:"Category", amount:"Amount (₹)", notes:"Notes (optional)",
     save:"Save", cancelBtn:"Cancel", edit:"", delete:"", closeBtn:"Close", collapseMenu:"Menu",
+    manageCategories:"Manage Categories", manageCategoriesNote:"Edit or delete the custom categories you've added for Income and Expense. Built-in categories can't be changed here.",
+    addCategory:"Add New Category", editCategory:"Edit Category", noCustomCategories:"You haven't added any custom categories yet.",
+    entriesUseThis:"entries use this category", categoryInUseWarning:"This category is currently used by existing entries. Deleting it won't change those entries, but they will no longer match a category in your list.",
     noEntries:"No entries yet", noEntriesSub:"Tap the button above to add your first one.",
     filterToday:"Today", filterWeek:"This Week", filterMonth:"This Month", filterYear:"This Year", filterAll:"All",
     interestTracking:"Interest Payment Tracking", interestMonthly:"Monthly Interest",
@@ -1218,6 +1231,9 @@ const T = {
     tasksNoEntries:"இன்னும் பணிகள் இல்லை", tasksNoEntriesSub:"முதல் பணியை சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்.",
     date:"தேதி", category:"வகை", amount:"தொகை (₹)", notes:"குறிப்பு (விருப்பம்)",
     save:"சேமி", cancelBtn:"ரத்து செய்", edit:"", delete:"", closeBtn:"மூடு", collapseMenu:"மெனு",
+    manageCategories:"வகைகளை நிர்வகி", manageCategoriesNote:"வருமானம் மற்றும் செலவுக்கு நீங்கள் சேர்த்த custom categories-ஐ திருத்தலாம் அல்லது நீக்கலாம். Built-in categories-ஐ இங்க மாற்ற முடியாது.",
+    addCategory:"புதிய வகை சேர்", editCategory:"வகையை திருத்து", noCustomCategories:"நீங்கள் இன்னும் எந்த custom category-உம் சேர்க்கல.",
+    entriesUseThis:"பதிவுகள் இந்த வகையை பயன்படுத்துகின்றன", categoryInUseWarning:"இந்த வகை தற்போதுள்ள பதிவுகளில் பயன்படுத்தப்படுகிறது. இதை நீக்கினால் அந்த பதிவுகள் மாறாது, ஆனால் அவை இனி உங்கள் பட்டியலில் உள்ள எந்த வகையுடனும் பொருந்தாது.",
     noEntries:"இன்னும் பதிவுகள் இல்லை", noEntriesSub:"முதல் பதிவைச் சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்.",
     filterToday:"இன்று", filterWeek:"இந்த வாரம்", filterMonth:"இந்த மாதம்", filterYear:"இந்த ஆண்டு", filterAll:"அனைத்தும்",
     interestTracking:"வட்டி செலுத்துதல் கண்காணிப்பு", interestMonthly:"மாதாந்திர வட்டி",
@@ -1735,20 +1751,36 @@ function categorySelectHtml(kind, cats, selected, selectId){
 }
 let pendingCatSelect = null;
 let pendingCatKind = null;
+let editingCategoryId = null;
 function handleCatSelectChange(selectEl){
   if(selectEl.value !== '__add_new__') return;
   pendingCatSelect = selectEl;
   pendingCatKind = selectEl.dataset.catKind;
+  editingCategoryId = null;
   // Don't leave the dropdown sitting on the "add new" placeholder while the modal is open.
   selectEl.value = selectEl.options[0].value;
+  document.getElementById('categoryModalTitle').textContent = tText('addCategory');
   document.getElementById('cat-modal-en').value = '';
   document.getElementById('cat-modal-ta').value = '';
   document.getElementById('categoryModalBackdrop').classList.add('show');
   setTimeout(()=> document.getElementById('cat-modal-ta').focus(), 50);
 }
+// Opens the same modal in edit mode for a category managed from Settings
+// (as opposed to the "+ Add New" option inside an entry-form dropdown).
+function editCategoryFromManager(kind, id){
+  const cat = CATEGORY_LISTS[kind]?.find(c=>c.id===id);
+  if(!cat) return;
+  pendingCatSelect = null;
+  pendingCatKind = kind;
+  editingCategoryId = id;
+  document.getElementById('categoryModalTitle').textContent = tText('editCategory');
+  document.getElementById('cat-modal-en').value = cat.en;
+  document.getElementById('cat-modal-ta').value = cat.ta;
+  document.getElementById('categoryModalBackdrop').classList.add('show');
+}
 function closeCategoryModal(){
   document.getElementById('categoryModalBackdrop').classList.remove('show');
-  pendingCatSelect = null; pendingCatKind = null;
+  pendingCatSelect = null; pendingCatKind = null; editingCategoryId = null;
 }
 async function saveCategory(){
   const kind = pendingCatKind;
@@ -1757,25 +1789,36 @@ async function saveCategory(){
   const en = document.getElementById('cat-modal-en').value.trim();
   let ta = document.getElementById('cat-modal-ta').value.trim();
   if(!en && !ta){ toast(tText('fillRequired')); return; }
-  if(!en) { /* English is required as the storage key; fall back to the Tamil text */ }
   const finalEn = en || ta;
   const finalTa = ta || en;
-  if(list.some(c=>c.en.toLowerCase()===finalEn.toLowerCase())){
+  const duplicate = list.some(c=>c.en.toLowerCase()===finalEn.toLowerCase() && c.id!==editingCategoryId);
+  if(duplicate){
     toast(biRawText('இந்த வகை ஏற்கனவே உள்ளது.','That category already exists.'));
     return;
   }
   const btn = document.getElementById('categoryModalSave');
   btn.disabled = true;
   try{
-    const { error } = await supabase.from('custom_categories').insert({
-      user_id: currentUser.id, kind, name_en: finalEn, name_ta: finalTa,
-    });
-    if(error) throw error;
-    list.push({ en: finalEn, ta: finalTa });
-    if(pendingCatSelect){
-      const selectId = pendingCatSelect.id;
-      const newSelect = categorySelectHtml(kind, list, finalEn, selectId);
-      pendingCatSelect.outerHTML = newSelect;
+    if(editingCategoryId){
+      const { error } = await supabase.from('custom_categories')
+        .update({ name_en: finalEn, name_ta: finalTa })
+        .eq('id', editingCategoryId).eq('user_id', currentUser.id);
+      if(error) throw error;
+      const cat = list.find(c=>c.id===editingCategoryId);
+      if(cat){ cat.en = finalEn; cat.ta = finalTa; }
+      renderCategoryManagerList();
+    } else {
+      const { data, error } = await supabase.from('custom_categories').insert({
+        user_id: currentUser.id, kind, name_en: finalEn, name_ta: finalTa,
+      }).select().single();
+      if(error) throw error;
+      list.push({ id: data.id, en: finalEn, ta: finalTa });
+      if(pendingCatSelect){
+        const selectId = pendingCatSelect.id;
+        const newSelect = categorySelectHtml(kind, list, finalEn, selectId);
+        pendingCatSelect.outerHTML = newSelect;
+      }
+      renderCategoryManagerList();
     }
     renderBillReminderSettings();
     closeCategoryModal();
@@ -1787,6 +1830,64 @@ async function saveCategory(){
     btn.disabled = false;
   }
 }
+// Manage Categories (Settings): list, edit, delete the custom categories a
+// user has added for Income/Expense. Built-in categories (the first
+// CATEGORY_BASE_LEN[kind] entries in each list) aren't in the database at
+// all, so they're shown as read-only and can't be edited/deleted here.
+let categoryManagerKind = 'income';
+function switchCategoryManagerKind(kind){
+  categoryManagerKind = kind;
+  document.getElementById('catMgrTabIncome').classList.toggle('ghost', kind!=='income');
+  document.getElementById('catMgrTabExpense').classList.toggle('ghost', kind!=='expense');
+  renderCategoryManagerList();
+}
+function renderCategoryManagerList(){
+  const el = document.getElementById('categoryManagerList');
+  if(!el) return;
+  const kind = categoryManagerKind;
+  const list = CATEGORY_LISTS[kind] || [];
+  const customCats = list.slice(CATEGORY_BASE_LEN[kind]);
+  if(customCats.length === 0){
+    el.innerHTML = `<p class="lang-note">${t('noCustomCategories')}</p>`;
+    return;
+  }
+  el.innerHTML = customCats.map(cat=>{
+    const usageCount = (state[kind]||[]).filter(e=>e.category===cat.en).length;
+    return `<div class="item-row">
+      <div class="info">
+        <div class="name">${escapeHtml(cat.ta)} <span class="lbl-sub">(${escapeHtml(cat.en)})</span></div>
+        ${usageCount>0 ? `<div class="meta">${usageCount} ${tText('entriesUseThis')}</div>` : ''}
+      </div>
+      <div class="row-actions">
+        <button class="icon-btn" onclick="editCategoryFromManager('${kind}','${cat.id}')" title="${t('edit')}">✏️</button>
+        <button class="icon-btn danger" onclick="askDeleteCategory('${kind}','${cat.id}')" title="${t('delete')}">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function askDeleteCategory(kind, id){
+  const cat = CATEGORY_LISTS[kind]?.find(c=>c.id===id);
+  if(!cat) return;
+  const usageCount = (state[kind]||[]).filter(e=>e.category===cat.en).length;
+  const body = usageCount > 0
+    ? `${tText('categoryInUseWarning')} (${usageCount} ${tText('entriesUseThis')})`
+    : tText('confirmDeleteBody');
+  openConfirmModal(body, async ()=>{
+    try{
+      const { error } = await supabase.from('custom_categories').delete().eq('id', id).eq('user_id', currentUser.id);
+      if(error) throw error;
+      const list = CATEGORY_LISTS[kind];
+      const idx = list.findIndex(c=>c.id===id);
+      if(idx>=0) list.splice(idx,1);
+      renderCategoryManagerList();
+      renderBillReminderSettings();
+      toast(tText('deletedMsg'));
+    } catch(err){
+      console.error(err);
+      toast(tText('deleteError') + (err?.message ? ' (' + err.message + ')' : ''));
+    }
+  });
+}
 /* Loaded once per login (see onAuthReady). Resets each list back to its
    built-in base length first so re-logins never duplicate entries. */
 async function loadCustomCategoriesFromDb(){
@@ -1797,7 +1898,7 @@ async function loadCustomCategoriesFromDb(){
     if(error) throw error;
     (data||[]).forEach(row=>{
       const list = CATEGORY_LISTS[row.kind];
-      if(list && !list.some(c=>c.en===row.name_en)) list.push({ en: row.name_en, ta: row.name_ta });
+      if(list && !list.some(c=>c.en===row.name_en)) list.push({ id: row.id, en: row.name_en, ta: row.name_ta });
     });
   }catch(err){ console.error(err); }
 }
@@ -2135,6 +2236,7 @@ function renderBillReminderSettings(){
   const goalVisibleInput = document.getElementById('savingsGoalVisibleInput');
   if(goalVisibleInput) goalVisibleInput.checked = savingsGoalVisible;
   renderBottomNavPicker();
+  renderCategoryManagerList();
   const billEl = document.getElementById('bill-reminder-list');
   if(billEl){
     billEl.innerHTML = EXPENSE_CATS.map(c=>{
@@ -3175,6 +3277,7 @@ Object.assign(window, {
   logout, handleCatSelectChange, closeCategoryModal, saveCategory,
   openTaskModal, closeTaskModal, saveTask, askDeleteTask, toggleTaskDone,
   saveSavingsGoalFromSettings, saveBottomNavPrefs, openChartModal, closeChartModal,
+  switchCategoryManagerKind, editCategoryFromManager, askDeleteCategory,
 });
 
 // Keep the app in sync if the user logs out (or their session expires) in
