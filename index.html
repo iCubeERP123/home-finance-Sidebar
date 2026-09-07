@@ -162,6 +162,7 @@ button,input,select,textarea{ font-family:inherit; }
 @media (min-width:880px){
   .nav-pin-btn .ic-desktop{ display:inline; }
   .nav-pin-btn .ic-mobile{ display:none; }
+  .chart-wrap{ height:300px; }
 }
 
 /* Smooth reveal for the nav whenever it goes from collapsed -> expanded */
@@ -314,7 +315,12 @@ main{ padding:20px 16px 0; }
     transition:opacity .2s ease, padding .2s ease;
   }
   [data-theme="dark"] .tabs{ box-shadow:2px 0 14px rgba(0,0,0,0.35); }
-  .nav-pin-btn{ justify-content:flex-start; margin-bottom:6px; }
+  .nav-pin-btn{
+    justify-content:flex-start; margin-bottom:10px; width:100%;
+    border:1px solid var(--line); background:var(--paper-deep); font-size:13px;
+  }
+  .nav-pin-btn .ic-desktop{ margin-right:6px; }
+  .nav-pin-btn:hover{ border-color:var(--indigo); }
   .nav-quick-row{ display:grid; grid-template-columns:1fr 1fr; border-bottom-color:var(--line); }
   .nav-quick-row .icon-toggle{ justify-content:center; background:var(--card); }
   .tab-btn{
@@ -681,7 +687,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 
   <!-- TABS -->
   <nav class="tabs" id="tabs">
-    <button class="nav-pin-btn" id="navCollapseBtn" type="button" aria-label="Collapse menu" aria-controls="tabs" aria-expanded="true" title="Collapse menu"><span class="ic ic-desktop">«</span><span class="ic ic-mobile">✕</span></button>
+    <button class="nav-pin-btn" id="navCollapseBtn" type="button" aria-label="Collapse menu" aria-controls="tabs" aria-expanded="true" title="Collapse menu"><span class="ic ic-desktop">«</span><span class="ic ic-mobile">✕</span><span class="ic-desktop" data-i18n="collapseMenu">Menu</span></button>
     <div class="nav-quick-row">
       <button class="icon-toggle" id="langToggle">🌐 <span id="langToggleLabel">EN</span></button>
       <button class="icon-toggle" id="themeToggle">🌗 <span id="themeToggleLabel" data-i18n="theme">Theme</span></button>
@@ -1144,7 +1150,7 @@ const T = {
     weekdaySun:"Sunday", weekdayMon:"Monday", weekdayTue:"Tuesday", weekdayWed:"Wednesday", weekdayThu:"Thursday", weekdayFri:"Friday", weekdaySat:"Saturday",
     tasksNoEntries:"No tasks yet", tasksNoEntriesSub:"Tap the button above to add your first task.",
     date:"Date", category:"Category", amount:"Amount (₹)", notes:"Notes (optional)",
-    save:"Save", cancelBtn:"Cancel", edit:"", delete:"", closeBtn:"Close",
+    save:"Save", cancelBtn:"Cancel", edit:"", delete:"", closeBtn:"Close", collapseMenu:"Menu",
     noEntries:"No entries yet", noEntriesSub:"Tap the button above to add your first one.",
     filterToday:"Today", filterWeek:"This Week", filterMonth:"This Month", filterYear:"This Year", filterAll:"All",
     interestTracking:"Interest Payment Tracking", interestMonthly:"Monthly Interest",
@@ -1211,7 +1217,7 @@ const T = {
     weekdaySun:"ஞாயிறு", weekdayMon:"திங்கள்", weekdayTue:"செவ்வாய்", weekdayWed:"புதன்", weekdayThu:"வியாழன்", weekdayFri:"வெள்ளி", weekdaySat:"சனி",
     tasksNoEntries:"இன்னும் பணிகள் இல்லை", tasksNoEntriesSub:"முதல் பணியை சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்.",
     date:"தேதி", category:"வகை", amount:"தொகை (₹)", notes:"குறிப்பு (விருப்பம்)",
-    save:"சேமி", cancelBtn:"ரத்து செய்", edit:"", delete:"", closeBtn:"மூடு",
+    save:"சேமி", cancelBtn:"ரத்து செய்", edit:"", delete:"", closeBtn:"மூடு", collapseMenu:"மெனு",
     noEntries:"இன்னும் பதிவுகள் இல்லை", noEntriesSub:"முதல் பதிவைச் சேர்க்க மேலே உள்ள பொத்தானை அழுத்தவும்.",
     filterToday:"இன்று", filterWeek:"இந்த வாரம்", filterMonth:"இந்த மாதம்", filterYear:"இந்த ஆண்டு", filterAll:"அனைத்தும்",
     interestTracking:"வட்டி செலுத்துதல் கண்காணிப்பு", interestMonthly:"மாதாந்திர வட்டி",
