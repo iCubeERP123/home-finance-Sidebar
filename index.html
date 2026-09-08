@@ -886,35 +886,6 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
       </div>
 
       <div class="card">
-        <h3 style="font-size:15px; margin:0 0 10px;">🎯 <span data-i18n="savingsGoal">Savings Goal</span></h3>
-        <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:13.5px; cursor:pointer;">
-          <input type="checkbox" id="savingsGoalVisibleInput" style="width:18px;height:18px;">
-          <span data-i18n="showGoalOnDashboard">Show on Dashboard</span>
-        </label>
-        <div style="display:flex; flex-wrap:wrap; gap:10px;">
-          <input type="number" id="savingsGoalInput" min="0" placeholder="e.g. 100000" style="flex:1 1 160px;">
-          <button class="btn sm" id="savingsGoalSaveBtn" onclick="saveSavingsGoalFromSettings()" data-i18n="saveGoal" style="flex:0 0 auto;">Save Goal</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 style="font-size:15px; margin:0 0 6px;">🏷️ <span data-i18n="manageCategories">Manage Categories</span></h3>
-        <p class="lang-note" style="margin-bottom:10px;" data-i18n="manageCategoriesNote">Edit or delete the custom categories you've added for Income and Expense. Built-in categories can't be changed here.</p>
-        <div class="settings-actions" style="margin-bottom:10px;">
-          <button class="btn sm" id="catMgrTabIncome" onclick="switchCategoryManagerKind('income')" data-i18n="tabIncome">Income</button>
-          <button class="btn sm ghost" id="catMgrTabExpense" onclick="switchCategoryManagerKind('expense')" data-i18n="tabExpense">Expense</button>
-        </div>
-        <div id="categoryManagerList"></div>
-      </div>
-
-      <div class="card">
-        <h3 style="font-size:15px; margin:0 0 6px;">📱 <span data-i18n="bottomNavCustomize">Customize Bottom Menu</span></h3>
-        <p class="lang-note" style="margin-bottom:10px;" data-i18n="bottomNavCustomizeNote">Pick up to 6 shortcuts for the floating bottom bar (mobile).</p>
-        <div id="bottomNavPicker" style="display:grid; grid-template-columns:1fr 1fr; gap:2px 12px; margin-bottom:12px;"></div>
-        <button class="btn sm" onclick="saveBottomNavPrefs()" data-i18n="save">Save</button>
-      </div>
-
-      <div class="card">
         <h3 style="font-size:15px; margin-bottom:10px;">கணக்கு / Account</h3>
         <p class="lang-note" id="accountEmailDisplay" style="margin-bottom:10px;"></p>
         <div class="settings-actions">
@@ -950,6 +921,35 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
       </div>
 
       <div class="card">
+        <h3 style="font-size:15px; margin:0 0 10px;">🎯 <span data-i18n="savingsGoal">Savings Goal</span></h3>
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:13.5px; cursor:pointer;">
+          <input type="checkbox" id="savingsGoalVisibleInput" style="width:18px;height:18px;">
+          <span data-i18n="showGoalOnDashboard">Show on Dashboard</span>
+        </label>
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">
+          <input type="number" id="savingsGoalInput" min="0" placeholder="e.g. 100000" style="flex:1 1 160px;">
+          <button class="btn sm" id="savingsGoalSaveBtn" onclick="saveSavingsGoalFromSettings()" data-i18n="saveGoal" style="flex:0 0 auto;">Save Goal</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:15px; margin:0 0 6px;">🏷️ <span data-i18n="manageCategories">Manage Categories</span></h3>
+        <p class="lang-note" style="margin-bottom:10px;" data-i18n="manageCategoriesNote">Edit or delete the custom categories you've added for Income and Expense. Built-in categories can't be changed here.</p>
+        <div class="settings-actions" style="margin-bottom:10px;">
+          <button class="btn sm" id="catMgrTabIncome" onclick="switchCategoryManagerKind('income')" data-i18n="tabIncome">Income</button>
+          <button class="btn sm ghost" id="catMgrTabExpense" onclick="switchCategoryManagerKind('expense')" data-i18n="tabExpense">Expense</button>
+        </div>
+        <div id="categoryManagerList"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="font-size:15px; margin:0 0 6px;">📱 <span data-i18n="bottomNavCustomize">Customize Bottom Menu</span></h3>
+        <p class="lang-note" style="margin-bottom:10px;" data-i18n="bottomNavCustomizeNote">Pick up to 6 shortcuts for the floating bottom bar (mobile).</p>
+        <div id="bottomNavPicker" style="display:grid; grid-template-columns:1fr 1fr; gap:2px 12px; margin-bottom:12px;"></div>
+        <button class="btn sm" onclick="saveBottomNavPrefs()" data-i18n="save">Save</button>
+      </div>
+
+      <div class="card">
         <h3 style="font-size:15px; margin-bottom:10px;" data-i18n="billReminders">Bill Reminders</h3>
         <p class="lang-note" data-i18n="billRemindersNote" style="margin-bottom:10px;">Choose which expense categories should remind you each month if unpaid.</p>
         <div id="bill-reminder-list"></div>
@@ -970,7 +970,11 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 
       <div class="card">
         <h3 style="font-size:15px; margin-bottom:10px; color:var(--ledger-red);" data-i18n="dangerZone">Danger Zone</h3>
-        <button class="btn danger sm" onclick="confirmClearAll()" data-i18n="clearAll">Clear All Data</button>
+        <div class="settings-actions" style="margin-bottom:14px;">
+          <button class="btn danger sm" onclick="confirmClearAll()" data-i18n="clearAll">Clear All Data</button>
+        </div>
+        <p class="lang-note" style="margin-bottom:8px;" data-i18n="deleteAccountNote">Permanently deletes all your data and disables sign-in with this email. This cannot be undone.</p>
+        <button class="btn danger sm" onclick="confirmDeleteAccount()" data-i18n="deleteAccount">Delete My Account</button>
       </div>
     </section>
   </main>
@@ -1187,6 +1191,9 @@ const T = {
     savingsReminders:"Savings Reminders", savingsRemindersNote:"Choose which savings types should remind you each month if not added yet.",
     backupRestore:"Backup & Restore", backupNote:"Your data is saved automatically to your Supabase database as you go. Use these buttons for an extra offline copy, or to bulk-load a JSON export.",
     downloadBackup:"Download Backup", restoreBackup:"Restore Backup", dangerZone:"Danger Zone", clearAll:"Clear All Data",
+    deleteAccount:"Delete My Account", deleteAccountNote:"Permanently deletes all your data and signs you out. To also fully close your sign-in email, contact us afterward — see Privacy Policy.",
+    confirmDeleteAccountBody:"This will permanently erase ALL of your data (income, expense, savings, loans, budgets, tasks, categories) and sign you out. This cannot be undone.",
+    accountDataDeleted:"Your account data has been deleted.",
     footerText:"Made for families, in Tamil & English 🪔",
     lockTitle:"Enter Passcode", lockSub:"PIN lock for your account.", unlock:"Unlock", lockWrong:"Wrong passcode. Try again.",
     confirmTitle:"Are you sure?", confirmYes:"Yes, Delete", confirmDeleteBody:"This entry will be permanently removed from the database.",
@@ -1257,6 +1264,9 @@ const T = {
     savingsReminders:"சேமிப்பு நினைவூட்டல்கள்", savingsRemindersNote:"ஒவ்வொரு மாதமும் இன்னும் சேர்க்கப்படாவிட்டால் எந்த சேமிப்பு வகைகள் உங்களுக்கு நினைவூட்ட வேண்டும் என்பதைத் தேர்ந்தெடுக்கவும்.",
     backupRestore:"காப்பு & மீட்டமை", backupNote:"உங்கள் தரவு தானாகவே உங்கள் Supabase தரவுத்தளத்தில் சேமிக்கப்படுகிறது. கூடுதல் ஆஃப்லைன் நகல் அல்லது JSON மீட்டமைப்புக்கு இந்த பொத்தான்களைப் பயன்படுத்தவும்.",
     downloadBackup:"காப்பு பதிவிறக்கு", restoreBackup:"காப்பை மீட்டமை", dangerZone:"ஆபத்து மண்டலம்", clearAll:"அனைத்து தரவையும் அழி",
+    deleteAccount:"என் கணக்கை நீக்கு", deleteAccountNote:"உங்கள் அனைத்து தரவும் நிரந்தரமாக நீக்கப்பட்டு, sign out ஆவீர்கள். Sign-in email-ஐயும் முழுசா மூட வேணும்னா, அதுக்கு பிறகு எங்களை தொடர்பு கொள்ளுங்கள் — Privacy Policy பாருங்கள்.",
+    confirmDeleteAccountBody:"இது உங்கள் அனைத்து தரவையும் (வருமானம், செலவு, சேமிப்பு, கடன், பட்ஜெட், பணிகள், வகைகள்) நிரந்தரமாக அழித்து, sign out செய்யும். இதை மீட்க முடியாது.",
+    accountDataDeleted:"உங்கள் கணக்கு தரவு நீக்கப்பட்டது.",
     footerText:"தமிழிலும் ஆங்கிலத்திலும், குடும்பங்களுக்காக 🪔",
     lockTitle:"பாஸ்கோட் உள்ளிடவும்", lockSub:"உங்கள் கணக்கிற்கான PIN பூட்டு.", unlock:"திற", lockWrong:"தவறான பாஸ்கோட். மீண்டும் முயற்சிக்கவும்.",
     confirmTitle:"நிச்சயமா?", confirmYes:"ஆம், நீக்கு", confirmDeleteBody:"இந்த பதிவு தரவுத்தளத்திலிருந்து நிரந்தரமாக நீக்கப்படும்.",
@@ -3112,6 +3122,27 @@ function confirmClearAll(){
     }
   });
 }
+// Deletes everything client-side access allows: all data rows across every
+// table, custom categories, and resets the profile row (PIN, savings goal).
+// It does NOT remove the underlying Supabase auth login (email/password) —
+// that requires admin-level API access that must never be embedded in a
+// client-side app. The sign-in itself is closed out via a follow-up request
+// (see Privacy Policy), same as any "contact us to delete your account"
+// flow common to small apps without a dedicated backend server.
+function confirmDeleteAccount(){
+  openConfirmModal(tText('confirmDeleteAccountBody'), async ()=>{
+    try{
+      await Promise.all(['income','expense','savings','loans','budgets','tasks','custom_categories'].map(dbDeleteAll));
+      const { error } = await supabase.from('profiles').update({ pin_code: null, savings_goal: 0, savings_goal_visible: true }).eq('id', currentUser.id);
+      if(error) throw error;
+      toast(tText('accountDataDeleted'));
+      setTimeout(()=> logout(), 900);
+    } catch(err){
+      console.error(err);
+      toast(tText('deleteError') + (err?.message ? ' (' + err.message + ')' : ''));
+    }
+  });
+}
 
 /* ---------------------------- Menu pin/collapse (shared desktop + mobile state) ----------------------------
    One boolean, `menuCollapsed`, drives both layouts. Only CSS (see
@@ -3285,7 +3316,7 @@ Object.assign(window, {
   openBudgetModal, closeBudgetModal, saveBudget, askDeleteBudget,
   closeConfirmModal, calcPlanner, exportCSV, exportExcel, exportPDF,
   setLang, setTheme, enableLock, disableLock, lockNow, toggleReminderCat,
-  downloadBackup, restoreBackup, confirmClearAll, renderList, renderReports,
+  downloadBackup, restoreBackup, confirmClearAll, confirmDeleteAccount, renderList, renderReports,
   logout, handleCatSelectChange, closeCategoryModal, saveCategory,
   openTaskModal, closeTaskModal, saveTask, askDeleteTask, toggleTaskDone,
   saveSavingsGoalFromSettings, saveBottomNavPrefs, openChartModal, closeChartModal,
