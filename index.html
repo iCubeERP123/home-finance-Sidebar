@@ -1727,7 +1727,7 @@ function handleCatSelectChange(selectEl){
   document.getElementById('categoryModalTitle').textContent = tText('addCategory');
   document.getElementById('cat-modal-en').value = '';
   document.getElementById('cat-modal-ta').value = '';
-  document.getElementById('categoryModalBackdrop').classList.add('show');
+  document.getElementById('categoryModalBackdrop').classList.add('show'); pushModalHistoryState();
   setTimeout(()=> document.getElementById('cat-modal-ta').focus(), 50);
 }
 // Opens the same modal in edit mode for a category managed from Settings
@@ -1741,7 +1741,7 @@ function editCategoryFromManager(kind, id){
   document.getElementById('categoryModalTitle').textContent = tText('editCategory');
   document.getElementById('cat-modal-en').value = cat.en;
   document.getElementById('cat-modal-ta').value = cat.ta;
-  document.getElementById('categoryModalBackdrop').classList.add('show');
+  document.getElementById('categoryModalBackdrop').classList.add('show'); pushModalHistoryState();
 }
 function closeCategoryModal(){
   document.getElementById('categoryModalBackdrop').classList.remove('show');
@@ -1921,7 +1921,7 @@ function openEntryModal(moduleKey, editId){
       <div class="field-row"><label class="field">${t('amount')}</label><input type="number" id="f-amount" ${isSavings?'':'min="0"'} value="${record?record.amount:''}">${isSavings?`<div class="lang-note">${lang==='ta'?'சேமிப்பிலிருந்து பணம் எடுத்தால் எதிர்மறை தொகை (உதா: -2000) உள்ளிடவும்.':'For a withdrawal from savings, enter a negative amount (e.g. -2000).'}</div>`:''}</div>
       <div class="field-row"><label class="field">${t('notes')}</label><textarea id="f-notes">${record?escapeHtml(record.notes||''):''}</textarea></div>`;
   }
-  document.getElementById('entryModalBackdrop').classList.add('show');
+  document.getElementById('entryModalBackdrop').classList.add('show'); pushModalHistoryState();
 }
 function closeEntryModal(){ document.getElementById('entryModalBackdrop').classList.remove('show'); }
 
@@ -1999,7 +1999,7 @@ function openConfirmModal(bodyText, onConfirm){
     newBtn.disabled = true;
     try{ await onConfirm(); } finally { newBtn.disabled = false; closeConfirmModal(); }
   };
-  document.getElementById('confirmModalBackdrop').classList.add('show');
+  document.getElementById('confirmModalBackdrop').classList.add('show'); pushModalHistoryState();
 }
 function closeConfirmModal(){ document.getElementById('confirmModalBackdrop').classList.remove('show'); }
 
@@ -2275,7 +2275,7 @@ function openChartModal(key){
   const ctx = document.getElementById('chartModalCanvas').getContext('2d');
   const clonedData = typeof structuredClone === 'function' ? structuredClone(src.config.data) : JSON.parse(JSON.stringify(src.config.data));
   modalChart = new Chart(ctx, { type:src.config.type, data:clonedData, options:{ ...src.config.options, maintainAspectRatio:false } });
-  document.getElementById('chartModalBackdrop').classList.add('show');
+  document.getElementById('chartModalBackdrop').classList.add('show'); pushModalHistoryState();
 }
 function closeChartModal(){
   document.getElementById('chartModalBackdrop').classList.remove('show');
@@ -2445,7 +2445,7 @@ function openBudgetModal(editId){
       <div class="field-row"><label class="field">${t('expectedExpense')}</label><input type="number" id="b-expense" min="0" value="${rec?rec.expectedExpense:''}"></div>
       <div class="field-row"><label class="field">${t('expectedSavings')}</label><input type="number" id="b-savings" min="0" value="${rec?rec.expectedSavings:''}"></div>
     </div>`;
-  document.getElementById('budgetModalBackdrop').classList.add('show');
+  document.getElementById('budgetModalBackdrop').classList.add('show'); pushModalHistoryState();
 }
 function closeBudgetModal(){ document.getElementById('budgetModalBackdrop').classList.remove('show'); }
 async function saveBudget(){
@@ -2573,7 +2573,7 @@ function openTaskModal(id){
       <input type="date" id="tk-date" value="${existing?.date || ''}">
     </div>
   `;
-  document.getElementById('taskModalBackdrop').classList.add('show');
+  document.getElementById('taskModalBackdrop').classList.add('show'); pushModalHistoryState();
 }
 function closeTaskModal(){ document.getElementById('taskModalBackdrop').classList.remove('show'); editingTaskId = null; }
 async function saveTask(){
@@ -3167,6 +3167,7 @@ function setMenuCollapsed(collapsed, opts={}){
   fab?.setAttribute('aria-expanded', String(!collapsed));
   pinBtn?.setAttribute('aria-expanded', String(!collapsed));
   const isMobile = window.innerWidth < 880;
+  if(!collapsed && isMobile && wasCollapsed) pushModalHistoryState();
   // Lock background scroll only while acting as a mobile overlay drawer.
   document.body.style.overflow = (!collapsed && isMobile) ? 'hidden' : '';
   if(!collapsed && !opts.silent && tabs){
@@ -3190,6 +3191,60 @@ document.addEventListener('keydown', (e)=>{
     setMenuCollapsed(true);
   }
 });
+
+/* ---- Mobile/Android back-button handling ----
+   Without this, the installed PWA has only one history entry, so the first
+   press of the phone's back button exits the app entirely — whether a
+   modal is open, the drawer is open, or the person just switched tabs.
+   Two mechanisms work together:
+   1. Every real tab switch pushes {tab:name}, so back-press steps back
+      through tab history like a normal multi-page app (handled in the
+      tab-btn click listener below, and consumed in popstate here).
+   2. Opening a modal or the mobile drawer pushes a plain buffer entry
+      (pushModalHistoryState, called at each modal-open site above and
+      from setMenuCollapsed) so the very next back-press just closes
+      that instead of leaving the tab. */
+const MODAL_CLOSERS = {
+  categoryModalBackdrop: closeCategoryModal,
+  entryModalBackdrop: closeEntryModal,
+  confirmModalBackdrop: closeConfirmModal,
+  chartModalBackdrop: closeChartModal,
+  budgetModalBackdrop: closeBudgetModal,
+  taskModalBackdrop: closeTaskModal,
+};
+function pushModalHistoryState(){ history.pushState({ appModal:true }, ''); }
+function closeAnyOpenModal(){
+  let closed = false;
+  Object.entries(MODAL_CLOSERS).forEach(([id, closeFn])=>{
+    if(document.getElementById(id)?.classList.contains('show')){ closeFn(); closed = true; }
+  });
+  return closed;
+}
+function goToTab(tabName, opts={}){
+  const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+  if(!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+tabName).classList.add('active');
+  if(tabName==='reports') renderReports();
+  if(tabName==='dashboard') renderDashboardCharts();
+  if(tabName==='settings') renderBillReminderSettings();
+  if(tabName==='tasks') renderTasks();
+  document.querySelectorAll('.bottom-nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===tabName));
+  if(!opts.fromPopstate && window.innerWidth < 880) setMenuCollapsed(true);
+}
+window.addEventListener('popstate', (e)=>{
+  if(closeAnyOpenModal()) return;
+  if(window.innerWidth < 880 && !document.documentElement.classList.contains('nav-collapsed')){
+    setMenuCollapsed(true);
+    return;
+  }
+  // A real tab-history entry (or the very first, tab-less entry, which
+  // means "back past Home" — let that proceed and exit the app normally).
+  if(e.state?.tab) goToTab(e.state.tab, { fromPopstate:true });
+});
+history.replaceState({ tab:'dashboard' }, '');
 (function(){
   // Swipe-left on the open drawer closes it, matching standard mobile UX.
   const tabsEl = document.getElementById('tabs');
@@ -3216,18 +3271,9 @@ function openTabFromUrlHash(){
 }
 document.querySelectorAll('.tab-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
-    if(btn.dataset.tab==='reports') renderReports();
-    if(btn.dataset.tab==='dashboard') renderDashboardCharts();
-    if(btn.dataset.tab==='settings') renderBillReminderSettings();
-    if(btn.dataset.tab==='tasks') renderTasks();
-    // Keep the fixed bottom nav (mobile) in sync with whichever tab is now
-    // active, whether it was opened from the bottom bar or the sidebar.
-    document.querySelectorAll('.bottom-nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.tab===btn.dataset.tab));
-    if(window.innerWidth < 880) setMenuCollapsed(true);
+    if(btn.classList.contains('active')) return; // no-op re-click shouldn't add a history entry
+    goToTab(btn.dataset.tab);
+    history.pushState({ tab: btn.dataset.tab }, '');
   });
 });
 // Bottom nav (mobile): each button just clicks the matching sidebar tab so
