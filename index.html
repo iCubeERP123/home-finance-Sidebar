@@ -1202,6 +1202,8 @@ const T = {
     notifSavingsGoal:"Savings goal reminder", notifSavingsGoalBody:"You're short of this month's savings goal so far",
     reportsSearch:"Search reports", noResults:"No matching entries", searchPH:"Search by category, notes or amount",
     fillRequired:"Please fill all required fields with valid values.",
+    passwordTooShort:"New password must be at least 6 characters.", passwordMismatch:"New password and confirmation don't match.",
+    currentPasswordWrong:"Current password is incorrect.", passwordUpdated:"Password updated successfully.",
     loadError:"Could not load data from the database. Check your connection and reload.",
     saveError:"Could not save. Please try again.", deleteError:"Could not delete. Please try again.", titleRequired:"Please enter a task title.",
     otpSent:"OTP code sent to your email.", passwordReset:"Password reset. You're logged in.",
@@ -1270,6 +1272,8 @@ const T = {
     notifSavingsGoal:"சேமிப்பு இலக்கு நினைவூட்டல்", notifSavingsGoalBody:"இந்த மாத சேமிப்பு இலக்கை இன்னும் அடையவில்லை",
     reportsSearch:"அறிக்கைகளில் தேடு", noResults:"பொருந்தும் பதிவுகள் இல்லை", searchPH:"வகை, குறிப்பு அல்லது தொகை மூலம் தேடு",
     fillRequired:"தேவையான அனைத்து புலங்களையும் சரியாக நிரப்பவும்.",
+    passwordTooShort:"புதிய கடவுச்சொல் குறைந்தது 6 எழுத்துக்கள் இருக்கணும்.", passwordMismatch:"புதிய கடவுச்சொல்லும் confirm password-உம் ஒத்துப்போகல.",
+    currentPasswordWrong:"தற்போதைய கடவுச்சொல் தவறு.", passwordUpdated:"கடவுச்சொல் வெற்றிகரமாக புதுப்பிக்கப்பட்டது.",
     loadError:"தரவுத்தளத்திலிருந்து தரவை ஏற்ற முடியவில்லை. இணைப்பை சரிபார்த்து மீண்டும் ஏற்றவும்.",
     saveError:"சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.", deleteError:"நீக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.", titleRequired:"தயவுசெய்து பணியின் பெயரை உள்ளிடவும்.",
     otpSent:"OTP குறியீடு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டது.", passwordReset:"கடவுச்சொல் மீட்டமைக்கப்பட்டது. நீங்கள் உள்நுழைந்துவிட்டீர்கள்.",
@@ -2954,6 +2958,40 @@ function renderAccountInfo(){
   const el = document.getElementById('accountEmailDisplay');
   if(el) el.textContent = currentUser?.email ? `${tText('security')}: ${currentUser.email}` : '';
 }
+// Change Password (Settings). Verifies the current password first (by
+// re-signing-in with it, which is harmless — it just refreshes the same
+// session) before calling supabase.auth.updateUser, so a stranger looking
+// at an unlocked, already-signed-in device can't silently change the
+// account password without knowing the current one.
+document.getElementById('changePasswordBtn')?.addEventListener('click', async ()=>{
+  const errEl = document.getElementById('changePasswordError');
+  const showErr = (msg)=>{ errEl.textContent = msg; errEl.style.display = 'block'; };
+  errEl.style.display = 'none';
+  const currentInput = document.getElementById('change-pass-current');
+  const newInput = document.getElementById('change-pass-new');
+  const confirmInput = document.getElementById('change-pass-confirm');
+  const current = currentInput.value;
+  const next = newInput.value;
+  const confirmVal = confirmInput.value;
+  if(!current || !next || !confirmVal){ showErr(tText('fillRequired')); return; }
+  if(next.length < 6){ showErr(tText('passwordTooShort')); return; }
+  if(next !== confirmVal){ showErr(tText('passwordMismatch')); return; }
+  const btn = document.getElementById('changePasswordBtn');
+  btn.disabled = true;
+  try{
+    const { error: verifyErr } = await supabase.auth.signInWithPassword({ email: currentUser.email, password: current });
+    if(verifyErr){ showErr(tText('currentPasswordWrong')); return; }
+    const { error: updateErr } = await supabase.auth.updateUser({ password: next });
+    if(updateErr) throw updateErr;
+    currentInput.value = ''; newInput.value = ''; confirmInput.value = '';
+    toast(tText('passwordUpdated'));
+  }catch(err){
+    console.error(err);
+    showErr(tText('saveError') + (err?.message ? ' (' + err.message + ')' : ''));
+  } finally {
+    btn.disabled = false;
+  }
+});
 async function ensureProfile(user){
   try{
     await supabase.from('profiles').upsert({
