@@ -1181,8 +1181,6 @@ const T = {
     languageTheme:"Language & Appearance", englishBtn:"English", tamilBtn:"தமிழ்", lightMode:"☀️ Light", darkMode:"🌙 Dark",
     changePassword:"Change Password", changePasswordNote:"Set a new password for your account right now — no email code needed since you're already signed in.",
     currentPassword:"Current Password", newPassword:"New Password", confirmNewPassword:"Confirm New Password", updatePassword:"Update Password",
-    passwordUpdated:"Password updated.", passwordMismatch:"New passwords don't match.", passwordTooShort:"New password must be at least 6 characters.",
-    currentPasswordWrong:"Current password is incorrect.", passwordUpdateError:"Could not update password. Please try again.",
     security:"Security", securityNote:"A PIN lock saved to your account. You'll be asked for it every time you open the app on this or any other device.",
     setPasscode:"Set Passcode", enableLock:"Enable Lock", disableLock:"Disable Lock", lockNow:"Lock Now",
     billReminders:"Bill Reminders", billRemindersNote:"Choose which expense categories should remind you each month if unpaid.",
@@ -2985,6 +2983,10 @@ document.getElementById('changePasswordBtn')?.addEventListener('click', async ()
     if(updateErr) throw updateErr;
     currentInput.value = ''; newInput.value = ''; confirmInput.value = '';
     toast(tText('passwordUpdated'));
+    // Sign out and return to the login screen so the person logs back in
+    // with the new password — otherwise the old session just keeps working
+    // silently and it looks like nothing happened.
+    setTimeout(()=> logout(), 900);
   }catch(err){
     console.error(err);
     showErr(tText('saveError') + (err?.message ? ' (' + err.message + ')' : ''));
