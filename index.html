@@ -524,8 +524,22 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
   0%{ transform:translate(0,0) rotate(0deg); opacity:1; }
   100%{ transform:translate(var(--dx), calc(var(--dy) + 90px)) rotate(360deg); opacity:0; }
 }
-.task-checkbox:checked{ animation:checkbox-pop .32s cubic-bezier(.34,1.56,.64,1); }
-@keyframes checkbox-pop{ 0%{ transform:scale(1); } 45%{ transform:scale(1.35); } 100%{ transform:scale(1); } }
+.task-checkbox:checked{ animation:checkbox-stamp .3s cubic-bezier(.2,.9,.3,1.1); }
+@keyframes checkbox-stamp{
+  0%{ transform:scale(2.2) rotate(-18deg); opacity:.5; }
+  60%{ transform:scale(.9) rotate(4deg); opacity:1; }
+  100%{ transform:scale(1) rotate(0deg); }
+}
+.coin-piece{
+  position:fixed; font-size:20px; z-index:500; pointer-events:none;
+  animation:coinBounce .7s ease-out forwards;
+}
+@keyframes coinBounce{
+  0%{ transform:translate(0,0) rotate(0deg); opacity:1; }
+  40%{ transform:translate(calc(var(--dx)*0.6), -46px) rotate(180deg); opacity:1; }
+  100%{ transform:translate(var(--dx), 30px) rotate(360deg); opacity:0; }
+}
+@media (prefers-reduced-motion: reduce){ .coin-piece{ display:none; } }
 
 .chart-wrap{ position:relative; height:230px; margin-top:6px; }
 .chart-wrap.chart-clickable{ cursor:pointer; border-radius:10px; transition:background .15s ease; }
@@ -590,10 +604,32 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 .auth-back-link{ margin-top:16px; display:inline-block; }
 .auth-card .thread-divider{ position:absolute; left:0; right:0; top:0; bottom:auto; height:14px; }
 
-.load-overlay{ position:fixed; inset:0; background:var(--paper); z-index:500; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:14px; }
-.load-overlay .spin{ width:38px; height:38px; border-radius:50%; border:4px solid var(--line); border-top-color:var(--indigo); animation:spin 0.9s linear infinite; }
-@keyframes spin{ to{ transform:rotate(360deg); } }
+.load-overlay{ position:fixed; inset:0; background:var(--paper); z-index:500; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
 .load-overlay .msg{ font-family:var(--font-display); color:var(--indigo); font-weight:700; }
+.skeleton-wrap{ width:min(90vw,420px); display:flex; flex-direction:column; gap:12px; }
+.skeleton-row{ display:flex; gap:10px; }
+.skeleton-box, .skeleton-card{
+  background:linear-gradient(90deg, var(--paper-deep) 25%, var(--line) 50%, var(--paper-deep) 75%);
+  background-size:200% 100%; animation:shimmer 1.3s ease-in-out infinite;
+  border-radius:12px;
+}
+.skeleton-box{ flex:1; height:64px; }
+.skeleton-card{ height:90px; }
+@keyframes shimmer{ 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
+@media (prefers-reduced-motion: reduce){ .skeleton-box, .skeleton-card{ animation:none; } }
+
+/* A deleted row tears away like a page ripped out of the ledger, instead
+   of just vanishing — pure transform/opacity, so it's cheap even on
+   low-end phones. */
+.item-row.tearing-out{
+  animation:tearPage .32s ease-in forwards;
+  transform-origin:left center; pointer-events:none;
+}
+@keyframes tearPage{
+  0%{ transform:translateX(0) rotate(0deg); opacity:1; }
+  100%{ transform:translateX(60px) rotate(-6deg); opacity:0; }
+}
+@media (prefers-reduced-motion: reduce){ .item-row.tearing-out{ animation:none; opacity:0; } }
 
 .bill-row{
   display:flex; align-items:center; justify-content:space-between; gap:10px;
@@ -615,7 +651,13 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 </head>
 <body>
 <div class="load-overlay" id="loadOverlay">
-  <div class="spin"></div>
+  <div class="skeleton-wrap" aria-hidden="true">
+    <div class="skeleton-row">
+      <div class="skeleton-box"></div><div class="skeleton-box"></div><div class="skeleton-box"></div>
+    </div>
+    <div class="skeleton-card"></div>
+    <div class="skeleton-card"></div>
+  </div>
   <div class="msg" id="loadOverlayMsg">Loading your ledger… / உங்கள் கணக்கு ஏற்றப்படுகிறது…</div>
 </div>
 
@@ -1475,6 +1517,23 @@ function fireConfetti(x, y, count=20){
     el.addEventListener('animationend', ()=> el.remove());
   }
 }
+// A few coins that pop up and tumble back down — celebrates a fresh income
+// entry. Same lightweight pattern as fireConfetti: plain divs, CSS-driven,
+// removed from the DOM the moment their animation ends.
+function fireCoinBounce(x, y, count=5){
+  for(let i=0;i<count;i++){
+    const el = document.createElement('div');
+    el.className = 'coin-piece';
+    el.textContent = '🪙';
+    const dx = (Math.random()-0.5)*70;
+    el.style.setProperty('--dx', dx.toFixed(1)+'px');
+    el.style.left = x+'px';
+    el.style.top = y+'px';
+    el.style.animationDelay = (i*0.05).toFixed(2)+'s';
+    document.body.appendChild(el);
+    el.addEventListener('animationend', ()=> el.remove());
+  }
+}
 function catLabel(list, enName){
   const c = list.find(c=>c.en===enName);
   if(!c) return enName;
@@ -1636,7 +1695,7 @@ function renderList(moduleKey){
       const catName = e.category || e.type;
       const amtIsNeg = Number(e.amount) < 0;
       const amtClass = moduleKey==='savings' ? (amtIsNeg ? 'expense' : 'income') : mod.amtClass;
-      return `<div class="item-row">
+      return `<div class="item-row" data-id="${e.id}">
         <div class="info">
           <div class="name">${catLabel(mod.cats, catName)}</div>
           <div class="meta">${e.date}${e.notes?' · '+escapeHtml(e.notes):''}</div>
@@ -1986,6 +2045,12 @@ async function saveEntry(){
       }
       renderList(moduleKey);
     }
+    // A small coin-bounce celebration for freshly-added income (not edits —
+    // that would feel odd when just fixing a typo in an old entry).
+    if(moduleKey==='income' && !editId){
+      const rect = saveBtn.getBoundingClientRect();
+      fireCoinBounce(rect.left+rect.width/2, rect.top+rect.height/2);
+    }
     closeEntryModal();
     toast(tText('savedMsg'));
     renderDashboard();
@@ -2012,25 +2077,38 @@ function openConfirmModal(bodyText, onConfirm){
   document.getElementById('confirmModalBackdrop').classList.add('show'); pushModalHistoryState();
 }
 function closeConfirmModal(){ document.getElementById('confirmModalBackdrop').classList.remove('show'); }
+// Plays the torn-page exit animation on a list row (by data-id) before
+// running the actual delete, so removing an entry feels like tearing a
+// page out of the ledger rather than the row just vanishing. Falls back
+// to running immediately if the row isn't found (already scrolled away,
+// or reduced-motion — the animation is near-instant there anyway).
+function tearRowThenRun(id, runFn){
+  const row = document.querySelector(`.item-row[data-id="${id}"]`);
+  if(!row){ runFn(); return; }
+  row.classList.add('tearing-out');
+  setTimeout(runFn, 300);
+}
 
 function askDeleteEntry(moduleKey, id){
-  openConfirmModal(tText('confirmDeleteBody'), async ()=>{
-    try{
-      await dbDelete(moduleKey, id);
-      if(moduleKey==='loans'){ state.loans = state.loans.filter(r=>r.id!==id); renderLoans(); }
-      else {
-        if(moduleKey==='income') state.income = state.income.filter(r=>r.id!==id);
-        if(moduleKey==='expense') state.expense = state.expense.filter(r=>r.id!==id);
-        if(moduleKey==='savings') state.savings = state.savings.filter(r=>r.id!==id);
-        renderList(moduleKey);
+  openConfirmModal(tText('confirmDeleteBody'), ()=>{
+    tearRowThenRun(id, async ()=>{
+      try{
+        await dbDelete(moduleKey, id);
+        if(moduleKey==='loans'){ state.loans = state.loans.filter(r=>r.id!==id); renderLoans(); }
+        else {
+          if(moduleKey==='income') state.income = state.income.filter(r=>r.id!==id);
+          if(moduleKey==='expense') state.expense = state.expense.filter(r=>r.id!==id);
+          if(moduleKey==='savings') state.savings = state.savings.filter(r=>r.id!==id);
+          renderList(moduleKey);
+        }
+        toast(tText('deletedMsg'));
+        renderDashboard(); renderBudgets();
+        if(document.getElementById('panel-reports').classList.contains('active')) renderReports();
+      } catch(err){
+        console.error(err);
+        toast(tText('deleteError') + (err?.message ? ' (' + err.message + ')' : ''));
       }
-      toast(tText('deletedMsg'));
-      renderDashboard(); renderBudgets();
-      if(document.getElementById('panel-reports').classList.contains('active')) renderReports();
-    } catch(err){
-      console.error(err);
-      toast(tText('deleteError') + (err?.message ? ' (' + err.message + ')' : ''));
-    }
+    });
   });
 }
 
@@ -2621,15 +2699,17 @@ async function saveTask(){
   }
 }
 function askDeleteTask(id){
-  openConfirmModal(tText('confirmDeleteBody'), async ()=>{
-    try{
-      await dbDelete('tasks', id);
-      state.tasks = state.tasks.filter(t=>t.id!==id);
-      toast(tText('deletedMsg')); renderTasks(); renderDashboard();
-    } catch(err){
-      console.error(err);
-      toast(tText('deleteError') + (err?.message ? ' (' + err.message + ')' : ''));
-    }
+  openConfirmModal(tText('confirmDeleteBody'), ()=>{
+    tearRowThenRun(id, async ()=>{
+      try{
+        await dbDelete('tasks', id);
+        state.tasks = state.tasks.filter(t=>t.id!==id);
+        toast(tText('deletedMsg')); renderTasks(); renderDashboard();
+      } catch(err){
+        console.error(err);
+        toast(tText('deleteError') + (err?.message ? ' (' + err.message + ')' : ''));
+      }
+    });
   });
 }
 function taskRepeatLabel(task){
@@ -2671,7 +2751,7 @@ function renderTasks(){
   });
   listEl.innerHTML = sorted.map(task=>{
     const done = isTaskDoneNow(task);
-    return `<div class="item-row">
+    return `<div class="item-row" data-id="${task.id}">
       <input type="checkbox" ${done?'checked':''} onchange="toggleTaskDone('${task.id}', event)" class="task-checkbox" style="width:20px;height:20px;flex:0 0 auto;cursor:pointer;">
       <div class="info">
         <div class="name" style="${done?'text-decoration:line-through;opacity:.6;':''}">${escapeHtml(task.title)}</div>
