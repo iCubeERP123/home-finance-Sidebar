@@ -604,19 +604,17 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 .auth-back-link{ margin-top:16px; display:inline-block; }
 .auth-card .thread-divider{ position:absolute; left:0; right:0; top:0; bottom:auto; height:14px; }
 
-.load-overlay{ position:fixed; inset:0; background:var(--paper); z-index:500; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
-.load-overlay .msg{ font-family:var(--font-display); color:var(--indigo); font-weight:700; }
-.skeleton-wrap{ width:min(90vw,420px); display:flex; flex-direction:column; gap:12px; }
-.skeleton-row{ display:flex; gap:10px; }
-.skeleton-box, .skeleton-card{
-  background:linear-gradient(90deg, var(--paper-deep) 25%, var(--line) 50%, var(--paper-deep) 75%);
-  background-size:200% 100%; animation:shimmer 1.3s ease-in-out infinite;
-  border-radius:12px;
+.load-overlay{ position:fixed; inset:0; background:var(--indigo-deep); z-index:500; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px; }
+.load-overlay .msg{ font-family:var(--font-display); color:#F3EEDF; font-weight:700; text-align:center; }
+.load-overlay .spin{
+  width:88px; height:88px; border-radius:50%; margin:0 auto; flex-shrink:0;
+  background:conic-gradient(from 0deg, var(--turmeric), var(--teal), var(--ledger-red), var(--turmeric));
+  -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 9px), #000 calc(100% - 9px));
+  mask:radial-gradient(farthest-side, transparent calc(100% - 9px), #000 calc(100% - 9px));
+  animation:spin 1s linear infinite;
 }
-.skeleton-box{ flex:1; height:64px; }
-.skeleton-card{ height:90px; }
-@keyframes shimmer{ 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
-@media (prefers-reduced-motion: reduce){ .skeleton-box, .skeleton-card{ animation:none; } }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+@media (prefers-reduced-motion: reduce){ .load-overlay .spin{ animation-duration:2.4s; } }
 
 /* A deleted row tears away like a page ripped out of the ledger, instead
    of just vanishing — pure transform/opacity, so it's cheap even on
@@ -651,14 +649,8 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 </head>
 <body>
 <div class="load-overlay" id="loadOverlay">
-  <div class="skeleton-wrap" aria-hidden="true">
-    <div class="skeleton-row">
-      <div class="skeleton-box"></div><div class="skeleton-box"></div><div class="skeleton-box"></div>
-    </div>
-    <div class="skeleton-card"></div>
-    <div class="skeleton-card"></div>
-  </div>
-  <div class="msg" id="loadOverlayMsg">Loading your ledger… / உங்கள் கணக்கு ஏற்றப்படுகிறது…</div>
+  <div class="spin"></div>
+  <div class="msg" id="loadOverlayMsg">Loading…</div>
 </div>
 
 <div class="app">
