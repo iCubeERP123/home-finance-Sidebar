@@ -738,6 +738,14 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
   .quote-result{ font-size:14.5px; }
 }
 
+/* ---- Text size (Settings) + Eye comfort warm filter ---- */
+html[data-textsize="small"] body{ zoom:.9; }
+html[data-textsize="large"] body{ zoom:1.15; }
+.eye-overlay{
+  position:fixed; inset:0; z-index:9999; pointer-events:none;
+  background:rgb(255,150,40); opacity:0; mix-blend-mode:multiply; transition:opacity .3s ease;
+}
+
 @media print{
   .app-header, .tabs, .btn, .row-actions, .search-bar, .filter-chips, footer, .modal-backdrop{ display:none !important; }
 }
@@ -1030,6 +1038,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
           <button class="btn ghost sm" onclick="setTheme('light')" data-i18n="lightMode">☀️ Light</button>
           <button class="btn ghost sm" onclick="setTheme('dark')" data-i18n="darkMode">🌙 Dark</button>
           <div id="themePicker" class="theme-picker"></div>
+          <div id="comfortBlock" style="width:100%;"></div>
         </div>
       </div>
 
@@ -1675,6 +1684,21 @@ function toLocalISO(d){
   return `${y}-${m}-${day}`;
 }
 function todayISO(){ return toLocalISO(new Date()); }
+// Weekday (கிழமை) shown next to every date, e.g. "2026-10-10 (சனி)".
+const WEEKDAY_SHORT = {
+  ta:['ஞாயிறு','திங்கள்','செவ்வாய்','புதன்','வியாழன்','வெள்ளி','சனி'],
+  en:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+};
+function dayName(dateStr){
+  if(!dateStr) return '';
+  const d = new Date(dateStr+'T00:00:00');
+  if(isNaN(d.getTime())) return '';
+  return WEEKDAY_SHORT[lang==='ta'?'ta':'en'][d.getDay()];
+}
+function dateWithDay(dateStr){
+  const n = dayName(dateStr);
+  return n ? `${dateStr} (${n})` : (dateStr||'');
+}
 function monthKey(dateStr){ return (dateStr||"").slice(0,7); }
 function isThisMonth(dateStr){ return monthKey(dateStr) === todayISO().slice(0,7); }
 function isThisYear(dateStr){ return (dateStr||"").slice(0,4) === todayISO().slice(0,4); }
@@ -1813,7 +1837,7 @@ function renderList(moduleKey){
       return `<div class="item-row" data-id="${e.id}">
         <div class="info">
           <div class="name">${catLabel(mod.cats, catName)}</div>
-          <div class="meta">${e.date}${e.notes?' · '+escapeHtml(e.notes):''}</div>
+          <div class="meta">${dateWithDay(e.date)}${e.notes?' · '+escapeHtml(e.notes):''}</div>
         </div>
         <div class="amt ${amtClass}">${fmtINR(e.amount)}</div>
         <div class="row-actions">
@@ -2100,7 +2124,7 @@ function openEntryModal(moduleKey, editId){
     const isSavings = moduleKey==='savings';
     const catFieldLabel = t('category');
     body.innerHTML = `
-      <div class="field-row"><label class="field">${t('date')}</label><input type="date" id="f-date" value="${record?record.date:todayISO()}"></div>
+      <div class="field-row"><label class="field">${t('date')}</label><input type="date" id="f-date" value="${record?record.date:todayISO()}" oninput="document.getElementById('f-date-day').textContent = dayName(this.value)"><div class="lang-note" id="f-date-day">${dayName(record?record.date:todayISO())}</div></div>
       <div class="field-row"><label class="field">${catFieldLabel}</label>${categorySelectHtml(moduleKey, mod.cats, record?(record.category||record.type):mod.cats[0].en, 'f-cat')}</div>
       <div class="field-row"><label class="field">${t('amount')}</label><input type="number" id="f-amount" ${isSavings?'':'min="0"'} value="${record?record.amount:''}">${isSavings?`<div class="lang-note">${lang==='ta'?'சேமிப்பிலிருந்து பணம் எடுத்தால் எதிர்மறை தொகை (உதா: -2000) உள்ளிடவும்.':'For a withdrawal from savings, enter a negative amount (e.g. -2000).'}</div>`:''}</div>
       <div class="field-row"><label class="field">${t('notes')}</label><textarea id="f-notes">${record?escapeHtml(record.notes||''):''}</textarea></div>`;
@@ -2911,7 +2935,7 @@ function renderReports(){
       return `<div class="item-row">
         <div class="info">
           <div class="name">${catLabel(e.catList, e.label)} <span class="cat-pill">${kindLabel[e.kind]}</span></div>
-          <div class="meta">${e.date}${e.notes?' · '+escapeHtml(e.notes):''}</div>
+          <div class="meta">${dateWithDay(e.date)}${e.notes?' · '+escapeHtml(e.notes):''}</div>
         </div>
         <div class="amt ${amtClass}">${fmtINR(e.amount)}</div>
       </div>`;
@@ -3030,6 +3054,7 @@ function applyTranslations(){
   document.querySelectorAll('.search-input').forEach(el=> el.placeholder = tText('searchPH'));
   renderBillReminderSettings();
   renderThemePicker();
+  renderComfortSettings();
 }
 document.getElementById('langToggle')?.addEventListener('click', ()=> setLang(lang==='ta'?'en':'ta'));
 document.getElementById('themeToggle')?.addEventListener('click', ()=> setTheme(THEMES[(THEMES.findIndex(x=>x.key===theme)+1) % THEMES.length].key));
@@ -3703,6 +3728,65 @@ async function copyQuote(){
   }catch(e){ console.error(e); }
 }
 
+/* ---------------------------- Text size & Eye comfort ----------------------------
+   Text size: small / medium / large (page zoom). Eye comfort: a warm
+   (reduced blue-light) tint over the whole app at 3 strengths, plus an
+   optional 20-20-20 reminder every 20 minutes. All saved on this device. */
+const TEXTSIZE_KEY = 'hfl_textsize_v1', EYE_KEY = 'hfl_eye_v1', EYEBREAK_KEY = 'hfl_eyebreak_v1';
+const EYE_OPACITY = [0, .16, .28, .40];
+let textSize = 'medium', eyeLevel = 0, eyeBreakOn = false, eyeBreakTimer = null;
+function loadComfortPrefs(){
+  try{
+    textSize = localStorage.getItem(TEXTSIZE_KEY) || 'medium';
+    eyeLevel = Number(localStorage.getItem(EYE_KEY)) || 0;
+    eyeBreakOn = localStorage.getItem(EYEBREAK_KEY) === '1';
+  }catch(e){ /* storage unavailable */ }
+  if(!['small','medium','large'].includes(textSize)) textSize = 'medium';
+  if(![0,1,2,3].includes(eyeLevel)) eyeLevel = 0;
+  applyComfort();
+}
+function applyComfort(){
+  document.documentElement.setAttribute('data-textsize', textSize);
+  let ov = document.getElementById('eyeOverlay');
+  if(!ov){ ov = document.createElement('div'); ov.id = 'eyeOverlay'; ov.className = 'eye-overlay'; document.body.appendChild(ov); }
+  ov.style.opacity = EYE_OPACITY[eyeLevel];
+  clearInterval(eyeBreakTimer); eyeBreakTimer = null;
+  if(eyeBreakOn){
+    eyeBreakTimer = setInterval(()=>{
+      if(document.visibilityState !== 'visible') return;
+      toast(biRawText('👀 20 நிமிடம் ஆச்சு! 20 அடி தூரத்தில் உள்ள ஒன்றை 20 விநாடி பாருங்கள்.', '👀 20 minutes up! Look at something 20 feet away for 20 seconds.'));
+      const el = document.getElementById('toast');
+      clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('show'), 9000);
+    }, 20*60*1000);
+  }
+  renderComfortSettings();
+}
+function setTextSize(v){ textSize = v; try{ localStorage.setItem(TEXTSIZE_KEY, v); }catch(e){} applyComfort(); }
+function setEyeLevel(n){ eyeLevel = n; try{ localStorage.setItem(EYE_KEY, String(n)); }catch(e){} applyComfort(); }
+function setEyeBreak(on){ eyeBreakOn = !!on; try{ localStorage.setItem(EYEBREAK_KEY, on?'1':'0'); }catch(e){} applyComfort(); }
+function renderComfortSettings(){
+  const el = document.getElementById('comfortBlock');
+  if(!el) return;
+  const sizes = [['small','சிறியது','Small'],['medium','நடுத்தரம்','Medium'],['large','பெரியது','Large']];
+  const eyes = [[0,'இல்லை','Off'],[1,'குறைவு','Low'],[2,'நடுத்தரம்','Medium'],[3,'அதிகம்','High']];
+  el.innerHTML = `
+    <div style="margin-top:14px; font-weight:700; margin-bottom:6px;">🔠 ${biRaw('எழுத்து அளவு','Text Size')}</div>
+    <div class="filter-chips" style="margin-bottom:10px;">
+      ${sizes.map(([k,ta,en])=>`<button type="button" class="chip${textSize===k?' active':''}" onclick="setTextSize('${k}')">${biRawText(ta,en)}</button>`).join('')}
+    </div>
+    <div style="font-weight:700; margin-bottom:4px;">👀 ${biRaw('கண் பாதுகாப்பு','Eye Comfort')}</div>
+    <p class="lang-note" style="margin-bottom:8px;">${biRawText('நீல ஒளியைக் குறைக்கும் இதமான வெப்ப நிற வடிகட்டி — இரவில் உதவும்.','Warm filter that cuts blue light — helps at night.')}</p>
+    <div class="filter-chips" style="margin-bottom:10px;">
+      ${eyes.map(([k,ta,en])=>`<button type="button" class="chip${eyeLevel===k?' active':''}" onclick="setEyeLevel(${k})">${biRawText(ta,en)}</button>`).join('')}
+    </div>
+    <div class="bill-row" style="margin-bottom:0;">
+      <span class="name">⏰ ${biRaw('20-20-20 கண் ஓய்வு நினைவூட்டல்','20-20-20 eye-break reminder')}</span>
+      <label class="switch"><input type="checkbox" ${eyeBreakOn?'checked':''} onchange="setEyeBreak(this.checked)"><span class="slider"></span></label>
+    </div>
+    <p class="lang-note" style="margin-top:6px;">${biRawText('ஒவ்வொரு 20 நிமிடமும் 20 அடி தூரத்தை 20 விநாடி பார்க்க நினைவூட்டும்.','Every 20 min, reminds you to look 20 feet away for 20 seconds.')}</p>
+  `;
+}
+
 /* Expose functions used via inline onclick="" handlers — required because this
    script now runs as an ES module, whose top-level scope is not global. */
 Object.assign(window, {
@@ -3716,6 +3800,7 @@ Object.assign(window, {
   saveSavingsGoalFromSettings, saveBottomNavPrefs, openChartModal, closeChartModal,
   switchCategoryManagerKind, editCategoryFromManager, askDeleteCategory,
   openQuoteModal, closeQuoteModal, spinQuoteWheel, copyQuote,
+  setTextSize, setEyeLevel, setEyeBreak, dayName,
 });
 
 // Keep the app in sync if the user logs out (or their session expires) in
@@ -3730,6 +3815,7 @@ supabase.auth.onAuthStateChange((event, session)=>{
 async function init(){
   applyTranslations();
   setTheme(savedTheme());
+  loadComfortPrefs();
   const overlay = document.getElementById('loadOverlay');
   try{
     const { data: { session } } = await supabase.auth.getSession();
