@@ -84,6 +84,41 @@
   --shadow:       0 2px 10px rgba(0,0,0,0.4);
   --shadow-lift:  0 10px 26px rgba(0,0,0,0.55);
 }
+/* ---- Extra colour themes (light-based; only variables change) ---- */
+[data-theme="ocean"]{
+  --paper:#E8F3F8; --paper-deep:#D3E8F1; --card:#FAFEFF; --line:#B9D6E3; --ink:#12303F; --ink-soft:#4A6B7C;
+  --indigo:#0F6A8C; --indigo-deep:#0A3D54; --turmeric:#F2A93B; --turmeric-bg:#FCEFD3; --teal:#1E8A78; --teal-bg:#D6EFEA;
+  --ledger-red:#C2453A; --brass:#3D8FA8; --header-end:#0A3D54;
+}
+[data-theme="forest"]{
+  --paper:#EEF3E4; --paper-deep:#DEE8CC; --card:#FBFDF5; --line:#C5D4A8; --ink:#1F2D1A; --ink-soft:#55684A;
+  --indigo:#2E6B3A; --indigo-deep:#163A1E; --turmeric:#D9A21B; --turmeric-bg:#F7EBC5; --teal:#3A8C6A; --teal-bg:#D9EEDF;
+  --ledger-red:#B2442E; --brass:#8C9A3E; --header-end:#163A1E;
+}
+[data-theme="rose"]{
+  --paper:#FBEEF0; --paper-deep:#F4DADF; --card:#FFFAFB; --line:#EBC3CB; --ink:#3A1F27; --ink-soft:#7A5360;
+  --indigo:#A33A5B; --indigo-deep:#5E1E34; --turmeric:#E0912B; --turmeric-bg:#FCE9CF; --teal:#2F7A64; --teal-bg:#DCEEE6;
+  --ledger-red:#C0392B; --brass:#B8864E; --header-end:#5E1E34;
+}
+[data-theme="lavender"]{
+  --paper:#F1EDFA; --paper-deep:#E1DAF3; --card:#FCFAFF; --line:#CFC5EA; --ink:#261E3D; --ink-soft:#62587F;
+  --indigo:#5B3FA3; --indigo-deep:#2F1E5E; --turmeric:#E0A21F; --turmeric-bg:#FBEECB; --teal:#2F7A64; --teal-bg:#DCEEE6;
+  --ledger-red:#B23A5A; --brass:#9A7FC2; --header-end:#2F1E5E;
+}
+[data-theme="sunset"]{
+  --paper:#FDF0E3; --paper-deep:#F7DEC4; --card:#FFFAF3; --line:#EBCBA6; --ink:#3B2113; --ink-soft:#7C5A43;
+  --indigo:#C2512B; --indigo-deep:#6B2210; --turmeric:#E8A317; --turmeric-bg:#FCEBC2; --teal:#2F7A64; --teal-bg:#DCEEE6;
+  --ledger-red:#A8322E; --brass:#C58A3E; --header-end:#6B2210;
+}
+.theme-picker{ display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:8px; width:100%; margin-top:6px; }
+.theme-opt{
+  display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 6px; cursor:pointer;
+  border:2px solid var(--line); border-radius:12px; background:var(--card); color:var(--ink);
+  font-size:12px; font-weight:700; font-family:var(--font-body); transition:transform .12s ease, border-color .15s ease;
+}
+.theme-opt:hover{ transform:translateY(-2px); }
+.theme-opt.active{ border-color:var(--turmeric); box-shadow:0 0 0 2px var(--turmeric-bg); }
+.theme-swatch{ width:46px; height:46px; border-radius:50%; border:2px solid rgba(0,0,0,.12); box-shadow:inset 0 0 0 5px var(--sw-bg); }
 *{ box-sizing:border-box; }
 html{ scroll-behavior:smooth; }
 body{
@@ -104,7 +139,7 @@ button,input,select,textarea{ font-family:inherit; }
 /* Header */
 .app-header{
   position:relative; padding:30px 20px 40px; text-align:center; overflow:hidden;
-  background:linear-gradient(180deg, var(--indigo) 0%, #1A2E4D 100%); color:#F3EEDF;
+  background:linear-gradient(180deg, var(--indigo) 0%, var(--header-end,#1A2E4D) 100%); color:#F3EEDF;
 }
 [data-theme="dark"] .app-header{ background:linear-gradient(180deg, #1C2C46 0%, #0F1B2E 100%); }
 
@@ -642,6 +677,33 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
 .switch input:checked + .slider{ background:var(--teal); }
 .switch input:checked + .slider::before{ transform:translateX(18px); }
 
+/* ---- Daily Quote Wheel ---- */
+.quote-card{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:14px 16px; margin-bottom:14px; }
+.quote-card .qc-title{ font-weight:700; font-family:var(--font-display); color:var(--indigo); }
+[data-theme="dark"] .quote-card .qc-title{ color:var(--indigo-deep); }
+.quote-modal{ max-width:420px; text-align:center; }
+.wheel-stage{ position:relative; width:min(78vw,320px); aspect-ratio:1/1; margin:6px auto 14px; }
+.wheel-stage canvas{ width:100%; height:100%; display:block; cursor:pointer; border-radius:50%; box-shadow:var(--shadow-lift); }
+.wheel-pointer{
+  position:absolute; top:-10px; left:50%; transform:translateX(-50%); z-index:2;
+  width:0; height:0; border-left:13px solid transparent; border-right:13px solid transparent;
+  border-top:26px solid var(--ledger-red); filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));
+}
+.wheel-hub{
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:64px; height:64px; border-radius:50%;
+  border:4px solid var(--card); background:var(--turmeric); color:#2B2117; font-weight:800; font-size:12px;
+  font-family:var(--font-display); cursor:pointer; box-shadow:var(--shadow-lift); z-index:2; line-height:1.1;
+}
+.wheel-hub:disabled{ opacity:.7; cursor:not-allowed; }
+.quote-result{
+  min-height:92px; padding:14px 16px; border-radius:var(--radius-sm); background:var(--turmeric-bg);
+  border:1px solid var(--turmeric); color:var(--ink); font-size:16px; line-height:1.6; font-weight:600; text-align:center;
+}
+.quote-result .qno{ display:block; font-family:var(--font-mono); font-size:11px; color:var(--ink-soft); margin-bottom:4px; }
+.quote-result.pop{ animation:quotePop .4s cubic-bezier(.3,1.4,.4,1); }
+@keyframes quotePop{ 0%{ transform:scale(.88); opacity:0; } 100%{ transform:scale(1); opacity:1; } }
+@media (prefers-reduced-motion: reduce){ .quote-result.pop{ animation:none; } }
+
 @media print{
   .app-header, .tabs, .btn, .row-actions, .search-bar, .filter-chips, footer, .modal-backdrop{ display:none !important; }
 }
@@ -762,6 +824,13 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
         <span class="sub" id="dashDateLabel"></span>
       </div>
       <div id="notifArea"></div>
+      <div class="card plain quote-card">
+        <div>
+          <div class="qc-title">🎡 <span data-i18n="quoteWheelTitle">Daily Quote Wheel</span></div>
+          <div class="lang-note" data-i18n="quoteWheelSub">A tiny boost on demand</div>
+        </div>
+        <button class="btn turmeric" onclick="openQuoteModal()">🎡 <span data-i18n="spinBtn">Spin</span></button>
+      </div>
       <div id="dashTasksCard"></div>
       <div id="dashSavingsGoal"></div>
       <div class="grid cols-3" id="dashStats"></div>
@@ -926,6 +995,7 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
           <button class="btn ghost sm" onclick="setLang('ta')" data-i18n="tamilBtn">தமிழ்</button>
           <button class="btn ghost sm" onclick="setTheme('light')" data-i18n="lightMode">☀️ Light</button>
           <button class="btn ghost sm" onclick="setTheme('dark')" data-i18n="darkMode">🌙 Dark</button>
+          <div id="themePicker" class="theme-picker"></div>
         </div>
       </div>
 
@@ -1084,6 +1154,23 @@ footer{ text-align:center; padding:26px 16px 10px; color:var(--ink-soft); font-s
     <div class="chart-wrap" style="height:60vh;"><canvas id="chartModalCanvas"></canvas></div>
     <div class="actions">
       <button class="btn ghost" onclick="closeChartModal()" data-i18n="closeBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUOTE WHEEL MODAL -->
+<div class="modal-backdrop" id="quoteModalBackdrop">
+  <div class="modal quote-modal">
+    <h3>🎡 <span data-i18n="quoteWheelTitle">Daily Quote Wheel</span></h3>
+    <div class="wheel-stage">
+      <div class="wheel-pointer"></div>
+      <canvas id="quoteWheelCanvas" width="640" height="640" onclick="spinQuoteWheel()"></canvas>
+      <button class="wheel-hub" id="quoteSpinBtn" onclick="spinQuoteWheel()" data-i18n="spinBtn">Spin</button>
+    </div>
+    <div class="quote-result" id="quoteResult"><span style="color:var(--ink-soft);font-weight:500;" data-i18n="spinHint">Tap the wheel to spin!</span></div>
+    <div class="actions">
+      <button class="btn ghost" id="quoteCopyBtn" onclick="copyQuote()" style="display:none;" data-i18n="copyQuote">Copy</button>
+      <button class="btn ghost" onclick="closeQuoteModal()" data-i18n="closeBtn">Close</button>
     </div>
   </div>
 </div>
@@ -1257,6 +1344,7 @@ const T = {
     saveError:"Could not save. Please try again.", deleteError:"Could not delete. Please try again.", titleRequired:"Please enter a task title.",
     otpSent:"OTP code sent to your email.", passwordReset:"Password reset. You're logged in.",
     loadingLedger:"Loading…",
+    quoteWheelTitle:"Daily Quote Wheel", quoteWheelSub:"A tiny boost on demand", spinBtn:"Spin", spinHint:"Tap the wheel to spin!", copyQuote:"Copy", copiedMsg:"Copied!",
   },
   ta: {
     appTitle: "வீட்டு நிதி",appTagline: "பணம், எளிமையாக",
@@ -1330,6 +1418,7 @@ const T = {
     saveError:"சேமிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.", deleteError:"நீக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்.", titleRequired:"தயவுசெய்து பணியின் பெயரை உள்ளிடவும்.",
     otpSent:"OTP குறியீடு உங்கள் மின்னஞ்சலுக்கு அனுப்பப்பட்டது.", passwordReset:"கடவுச்சொல் மீட்டமைக்கப்பட்டது. நீங்கள் உள்நுழைந்துவிட்டீர்கள்.",
     loadingLedger:"ledger…",
+    quoteWheelTitle:"தினசரி மேற்கோள் சக்கரம்", quoteWheelSub:"தேவைப்படும்போது ஒரு சிறிய உற்சாகம்", spinBtn:"சுழற்று", spinHint:"சக்கரத்தை தொட்டு சுழற்றுங்கள்!", copyQuote:"நகலெடு", copiedMsg:"நகலெடுக்கப்பட்டது!",
   },
 };
 
@@ -2863,7 +2952,41 @@ function setLang(l){
   try{ localStorage.setItem(LANG_STORAGE_KEY, l); }catch(e){ /* storage unavailable, ignore */ }
   applyTranslations(); renderAll(); renderBottomNav();
 }
-function setTheme(th){ theme = th; document.documentElement.setAttribute('data-theme', th); }
+const THEME_STORAGE_KEY = 'hfl_theme_v1';
+const THEMES = [
+  { key:'light',    ta:'கிளாசிக்',  en:'Classic',  bg:'#F7EFDC', accent:'#2B4570', meta:'#2B4570' },
+  { key:'dark',     ta:'இருள்',     en:'Dark',     bg:'#1B160F', accent:'#E8B342', meta:'#1C2C46' },
+  { key:'ocean',    ta:'கடல்',      en:'Ocean',    bg:'#E8F3F8', accent:'#0F6A8C', meta:'#0F6A8C' },
+  { key:'forest',   ta:'காடு',      en:'Forest',   bg:'#EEF3E4', accent:'#2E6B3A', meta:'#2E6B3A' },
+  { key:'rose',     ta:'ரோஜா',      en:'Rose',     bg:'#FBEEF0', accent:'#A33A5B', meta:'#A33A5B' },
+  { key:'lavender', ta:'லாவெண்டர்', en:'Lavender', bg:'#F1EDFA', accent:'#5B3FA3', meta:'#5B3FA3' },
+  { key:'sunset',   ta:'சூரியாஸ்தமனம்', en:'Sunset', bg:'#FDF0E3', accent:'#C2512B', meta:'#C2512B' },
+];
+function savedTheme(){
+  try{
+    const v = localStorage.getItem(THEME_STORAGE_KEY);
+    if(v && THEMES.some(x=>x.key===v)) return v;
+  }catch(e){ /* storage unavailable */ }
+  return 'light';
+}
+function setTheme(th){
+  if(!THEMES.some(x=>x.key===th)) th = 'light';
+  theme = th;
+  document.documentElement.setAttribute('data-theme', th);
+  try{ localStorage.setItem(THEME_STORAGE_KEY, th); }catch(e){ /* ignore */ }
+  const def = THEMES.find(x=>x.key===th);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', def.meta);
+  renderThemePicker();
+}
+function renderThemePicker(){
+  const el = document.getElementById('themePicker');
+  if(!el) return;
+  el.innerHTML = THEMES.map(x=>`
+    <button type="button" class="theme-opt${x.key===theme?' active':''}" onclick="setTheme('${x.key}')">
+      <span class="theme-swatch" style="--sw-bg:${x.bg}; background:${x.accent};"></span>
+      <span>${lang==='ta' ? x.ta : x.en}</span>
+    </button>`).join('');
+}
 function applyTranslations(){
   document.querySelectorAll('[data-i18n]').forEach(el=>{
     const key = el.getAttribute('data-i18n');
@@ -2872,9 +2995,10 @@ function applyTranslations(){
   document.getElementById('langToggleLabel').textContent = lang==='ta' ? 'தமிழ்' : 'EN';
   document.querySelectorAll('.search-input').forEach(el=> el.placeholder = tText('searchPH'));
   renderBillReminderSettings();
+  renderThemePicker();
 }
 document.getElementById('langToggle')?.addEventListener('click', ()=> setLang(lang==='ta'?'en':'ta'));
-document.getElementById('themeToggle')?.addEventListener('click', ()=> setTheme(theme==='light'?'dark':'light'));
+document.getElementById('themeToggle')?.addEventListener('click', ()=> setTheme(THEMES[(THEMES.findIndex(x=>x.key===theme)+1) % THEMES.length].key));
 document.getElementById('headerLockBtn')?.addEventListener('click', ()=>{
   if(!passcode){
     toast(biRawText(
@@ -3288,6 +3412,7 @@ document.addEventListener('keydown', (e)=>{
       that instead of leaving the tab. */
 const MODAL_CLOSERS = {
   categoryModalBackdrop: closeCategoryModal,
+  quoteModalBackdrop: closeQuoteModal,
   entryModalBackdrop: closeEntryModal,
   confirmModalBackdrop: closeConfirmModal,
   chartModalBackdrop: closeChartModal,
@@ -3437,6 +3562,113 @@ function renderAll(){
   if(document.getElementById('panel-reports').classList.contains('active')) renderReports();
 }
 
+/* ---------------------------- Daily Quote Wheel ----------------------------
+   A spin-the-wheel (like gospinwheel): tap the wheel or the centre button,
+   it spins with an ease-out and lands on a random quote. Edit QUOTES below
+   to add/remove quotes — the wheel resizes itself automatically. */
+const QUOTES = [
+  { no:1,  text:"அவமானங்கள் கற்றுத்தந்த பாடங்கள் அவ்வளவு எளிதில் மறக்காது …" },
+  { no:2,  text:"சிலருக்கு விளக்கம் கொடுப்பதை விட விலகி நிற்பதே மேல்…" },
+  { no:4,  text:"யாரோ எழுதியது இல்லை உன் வாழ்கை நீ எழுதுவதுதான் உன் வாழ்கை" },
+  { no:5,  text:"நீ இருப்பதை நினைத்து மகிழ்ந்தாள் இழந்ததையும் விரைவில் அடைந்துவிடுவாய்" },
+  { no:6,  text:"உன் உணர்வுகளை மதிக்காத இடத்தில் உரிமைக்கு மட்டும் இடம் அளிக்கத்தே" },
+  { no:7,  text:"உனக்காக நிர்ணயிக்கப்பட்டது உன்னை ஒரு நாள் அடைந்தே தீரும்" },
+  { no:8,  text:"தனிமை வேதனை என்று நினைத்து வேடத்தே சாதனை செய்யும் அளவுக்கு சிந்தனைகளை கற்றுகுடுக்கும்" },
+  { no:9,  text:"புகழ்தல் மயங்காதே இகழ்ந்தால் தளராதே" },
+  { no:10, text:"உன் குணத்தை பற்றி சொல்ல ஆள்இல்லை குறை சொல்ல ஊரே உள்ளது" },
+  { no:11, text:"எல்லோரிடம் இருந்தும் கற்றுள்க்கொள் ஆனால் யாரு வழியும் பின்பற்றாதே" },
+  { no:12, text:"பொய்யை எளிதாக நம்பும் உலகம் உண்மையை நிரூபிக்க ஆதாரம் கேக்கும்" },
+  { no:13, text:"அதிகமாக பேசுவதினால் மட்டும் ஒருவன் அறிஞனாகிவிடமாட்டான்" },
+  { no:14, text:"மன அமைதியுடன் நிதானமாக யோசித்தால் எழுந்த எல்ல கேள்விக்கும் விடைகிடைக்கும்." },
+  { no:15, text:"உன் பலத்தை நம்பு பயத்தை நம்பாதே" },
+  { no:16, text:"தவறு செய்ரவர்கைளை மன்னித்து விடு அனால் அவர்களை திரும்ப நம்பும் அளவிற்கு முட்டாளா இருந்துடாத" },
+  { no:17, text:"யார் மீதும் வெறுப்பை கட்டி இங்கு எதுவும் மாறிவிடப்போவதில்லை அமைதியா இரு நடப்பது நடக்கட்டும்" },
+  { no:18, text:"கோபம் என்பது பிறர் செய்யும் தவறுக்கு உனக்கு நீயே உனக்கு கொடுத்துக்கொள்ளும் தண்டனை." },
+  { no:19, text:"எதிர்த்து வாழு அனால் ஒரு போதும் யாரையும் எதிர்த்து வாழாதே" },
+  { no:20, text:"பொய் சொல்லி ஒன்றை நீ அடைய விரும்பாதே அதனால் வரும் இன்பம் அதிக நேரம் நீடிக்காது" },
+];
+const WHEEL_COLORS = ['#2B4570','#D99A1B','#2F7A64','#B23A2E','#7A4F9A','#C46A1A','#1F7A8C','#8C5A3C'];
+let wheelAngle = 0;      // current rotation in radians
+let wheelSpinning = false;
+let currentQuote = null;
+
+function drawQuoteWheel(){
+  const canvas = document.getElementById('quoteWheelCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const size = canvas.width, c = size/2, r = c - 6;
+  const n = QUOTES.length, seg = (Math.PI*2)/n;
+  ctx.clearRect(0,0,size,size);
+  for(let i=0;i<n;i++){
+    const a0 = wheelAngle - Math.PI/2 + i*seg;
+    const a1 = a0 + seg;
+    ctx.beginPath(); ctx.moveTo(c,c); ctx.arc(c,c,r,a0,a1); ctx.closePath();
+    let color = WHEEL_COLORS[i % WHEEL_COLORS.length];
+    // avoid same colour touching on the seam when n isn't a multiple of palette length
+    if(i === n-1 && n % WHEEL_COLORS.length === 1) color = '#5C6B2E';
+    ctx.fillStyle = color; ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = '#FFFCF4'; ctx.stroke();
+    ctx.save();
+    ctx.translate(c,c); ctx.rotate(a0 + seg/2);
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#fff'; ctx.font = '700 34px "JetBrains Mono", monospace';
+    ctx.fillText(String(QUOTES[i].no), r - 28, 0);
+    ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(c,c,r,0,Math.PI*2); ctx.lineWidth = 6; ctx.strokeStyle = '#B08D3E'; ctx.stroke();
+}
+function openQuoteModal(){
+  document.getElementById('quoteModalBackdrop').classList.add('show'); pushModalHistoryState();
+  drawQuoteWheel();
+}
+function closeQuoteModal(){
+  document.getElementById('quoteModalBackdrop').classList.remove('show');
+}
+function spinQuoteWheel(){
+  if(wheelSpinning) return;
+  wheelSpinning = true;
+  const btn = document.getElementById('quoteSpinBtn');
+  btn.disabled = true;
+  document.getElementById('quoteCopyBtn').style.display = 'none';
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const duration = reduced ? 900 : 4800;
+  const extraTurns = reduced ? 1 : 5 + Math.floor(Math.random()*3);
+  const startAngle = wheelAngle;
+  const delta = extraTurns*Math.PI*2 + Math.random()*Math.PI*2;
+  const t0 = performance.now();
+  function frame(now){
+    const p = Math.min((now - t0)/duration, 1);
+    const eased = 1 - Math.pow(1-p, 4); // ease-out quartic
+    wheelAngle = startAngle + delta*eased;
+    drawQuoteWheel();
+    if(p < 1){ requestAnimationFrame(frame); return; }
+    wheelAngle = wheelAngle % (Math.PI*2);
+    wheelSpinning = false;
+    btn.disabled = false;
+    const n = QUOTES.length, seg = (Math.PI*2)/n;
+    const rel = ((-wheelAngle) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+    const idx = Math.min(Math.floor(rel/seg), n-1);
+    showQuoteResult(QUOTES[idx]);
+  }
+  requestAnimationFrame(frame);
+}
+function showQuoteResult(q){
+  currentQuote = q;
+  const el = document.getElementById('quoteResult');
+  el.innerHTML = `<span class="qno">#${q.no}</span>${escapeHtml(q.text)}`;
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+  document.getElementById('quoteCopyBtn').style.display = '';
+  const rect = el.getBoundingClientRect();
+  fireConfetti(rect.left + rect.width/2, rect.top, 22);
+}
+async function copyQuote(){
+  if(!currentQuote) return;
+  try{
+    await navigator.clipboard.writeText(currentQuote.text);
+    toast(tText('copiedMsg'));
+  }catch(e){ console.error(e); }
+}
+
 /* Expose functions used via inline onclick="" handlers — required because this
    script now runs as an ES module, whose top-level scope is not global. */
 Object.assign(window, {
@@ -3449,6 +3681,7 @@ Object.assign(window, {
   openTaskModal, closeTaskModal, saveTask, askDeleteTask, toggleTaskDone,
   saveSavingsGoalFromSettings, saveBottomNavPrefs, openChartModal, closeChartModal,
   switchCategoryManagerKind, editCategoryFromManager, askDeleteCategory,
+  openQuoteModal, closeQuoteModal, spinQuoteWheel, copyQuote,
 });
 
 // Keep the app in sync if the user logs out (or their session expires) in
@@ -3462,7 +3695,7 @@ supabase.auth.onAuthStateChange((event, session)=>{
 
 async function init(){
   applyTranslations();
-  setTheme('light');
+  setTheme(savedTheme());
   const overlay = document.getElementById('loadOverlay');
   try{
     const { data: { session } } = await supabase.auth.getSession();
